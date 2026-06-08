@@ -1,0 +1,9 @@
+name,site,location,status,u_height,width
+HH1-RACK-B1 ,CHUNG_CU,Toa_A1,active,43,19
+RACK-CA-H-1 ,CHUNG_CU,Toa_A1,active,43,19
+RACK-CA-H-2,CHUNG_CU,Toa_A1,active,43,19
+HH1-RACK-T5,CHUNG_CU,Toa_A1,active,43,19
+HH1-RACK-T10,CHUNG_CU,Toa_A1,active,43,19
+HH1-RACK-T15,CHUNG_CU,Toa_A1,active,43,19
+HH1-RACK-T19,CHUNG_CU,Toa_A1,active,43,19
+CCTV-MRACK,CHUNG_CU,Toa_A1,active,43,19

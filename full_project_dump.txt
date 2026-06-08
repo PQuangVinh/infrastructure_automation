@@ -1,0 +1,1140 @@
+.
+├── ansible.cfg
+├── full_project_dump.txt
+├── generated_configs
+│   ├── 192.168.80.55_vlan_l2.cfg
+│   ├── 192.168.80.55_vrrp.cfg
+│   ├── 192.168.80.55_vrrp_l3.cfg
+│   ├── 192.168.80.56_vlan_l2.cfg
+│   ├── 192.168.80.56_vrrp.cfg
+│   ├── 192.168.80.56_vrrp_l3.cfg
+│   ├── 192.168.80.57_vlan_l2.cfg
+│   ├── 192.168.80.58_vlan_l2.cfg
+│   └── 192.168.80.59_vlan_l2.cfg
+├── inventories
+│   ├── lab
+│   │   ├── group_vars
+│   │   │   └── all.yml
+│   │   ├── hosts
+│   │   └── host_vars
+│   │       ├── 192.168.80.55.yml
+│   │       ├── 192.168.80.56.yml
+│   │       ├── 192.168.80.57.yml
+│   │       ├── 192.168.80.58.yml
+│   │       └── 192.168.80.59.yml
+│   ├── production
+│   └── staging
+├── playbooks
+│   ├── deploy_ospf.yml
+│   ├── deploy_vlan.yml
+│   ├── deploy_vrrp.yml
+│   ├── generated_configs
+│   │   ├── 192.168.80.55_vlan_l2.cfg
+│   │   └── 192.168.80.56_vlan_l2.cfg
+│   └── site_all.yml
+├── README.md
+├── roles
+│   ├── mstp
+│   │   └── tasks
+│   ├── ospf
+│   │   └── tasks
+│   │       └── main.yml
+│   ├── port_security
+│   │   └── tasks
+│   ├── vlan
+│   │   └── tasks
+│   │       └── main.yml
+│   └── vrrp
+│       └── tasks
+│           └── main.yml
+└── templates
+    ├── arista_eos
+    ├── ios
+    │   ├── hostname.j2
+    │   ├── master_config.j2
+    │   ├── vlan.j2
+    │   └── vrrp.j2
+    └── juniper_junos
+        └── vlan.j2
+
+24 directories, 33 files
+
+==============================
+FILE: ./README.md
+==============================
+
+==============================
+FILE: ./playbooks/deploy_ospf.yml
+==============================
+
+==============================
+FILE: ./playbooks/site_all.yml
+==============================
+---
+- name: Tác vụ cấu hình Hostname toàn bộ hạ tầng
+  hosts: all_switches
+  gather_facts: no
+  tasks:
+    - name: Đổi Hostname thiết bị
+      cisco.ios.ios_config:
+        lines: "hostname {{ device_hostname }}"
+  tags: [hostname]
+
+- name: Tác vụ cấu hình VLAN Layer 2 cho toàn bộ hạ tầng
+  hosts: all_switches
+  gather_facts: no
+  roles:
+    - role: vlan
+  tags: [vlan]
+
+- name: Tác vụ cấu hình Layer 3 IP và VRRP cho dòng Switch Core
+  hosts: core_switches
+  gather_facts: no
+  roles:
+    - role: vrrp
+  tags: [vrrp]
+
+==============================
+FILE: ./playbooks/deploy_vrrp.yml
+==============================
+---
+- name: Cấu hình VRRP cho Switch
+  hosts: core_switches
+  gather_facts: false
+
+  roles:
+    - vrrp
+
+==============================
+FILE: ./playbooks/generated_configs/192.168.80.55_vlan_l2.cfg
+==============================
+! --- TEMPLATE 1: DATABASE VLAN LAYER 2 ---
+vlan 10
+ name STORAGE_10
+vlan 11
+ name TEST_11
+vlan 12
+ name APP_12
+vlan 13
+ name DMZ_SRV_13
+vlan 14
+ name VMOTION_14
+vlan 15
+ name OOB_15
+vlan 16
+ name SRV-MGMT_16
+vlan 17
+ name DB_17
+vlan 18
+ name RESERVE_18
+vlan 20
+ name PC-Printer_20
+vlan 30
+ name IP-Phone_30
+vlan 40
+ name Wifi-Office_40
+vlan 45
+ name Wifi-Guest_45
+vlan 50
+ name CCTV_50
+vlan 55
+ name LAN-MGMT_55
+vlan 60
+ name Tongdai_60
+vlan 70
+ name WIFI_MGMT_70
+vlan 80
+ name Du_Phong1_80
+vlan 90
+ name Du_Phong2_90
+
+==============================
+FILE: ./playbooks/generated_configs/192.168.80.56_vlan_l2.cfg
+==============================
+! --- TEMPLATE 1: DATABASE VLAN LAYER 2 ---
+vlan 10
+ name STORAGE_10
+vlan 11
+ name TEST_11
+vlan 12
+ name APP_12
+vlan 13
+ name DMZ_SRV_13
+vlan 14
+ name VMOTION_14
+vlan 15
+ name OOB_15
+vlan 16
+ name SRV-MGMT_16
+vlan 17
+ name DB_17
+vlan 18
+ name RESERVE_18
+vlan 20
+ name PC-Printer_20
+vlan 30
+ name IP-Phone_30
+vlan 40
+ name Wifi-Office_40
+vlan 45
+ name Wifi-Guest_45
+vlan 50
+ name CCTV_50
+vlan 55
+ name LAN-MGMT_55
+vlan 60
+ name Tongdai_60
+vlan 70
+ name WIFI_MGMT_70
+vlan 80
+ name Du_Phong1_80
+vlan 90
+ name Du_Phong2_90
+
+==============================
+FILE: ./playbooks/deploy_vlan.yml
+==============================
+
+==============================
+FILE: ./inventories/lab/group_vars/all.yml
+==============================
+---
+# Bảng phân hoạch mạng cố định toàn Enterprise (all.yml)
+master_vlan_template:
+  - { vlan_num: 10, vlan_name: "STORAGE_10",   dfgw: "10.0.10.254",  mask: "255.255.255.0", vlan_des: "Vlan cho ket noi giua he thong ao hoa va NAS",         octet_thuy: "10" }
+  - { vlan_num: 11, vlan_name: "TEST_11",      dfgw: "10.0.11.254",  mask: "255.255.255.0", vlan_des: "Vlan cho moi truong thu nghiem",                    octet_thuy: "11" }
+  - { vlan_num: 12, vlan_name: "APP_12",       dfgw: "10.0.12.254",  mask: "255.255.255.0", vlan_des: "Vlan cho cac may chu application" ,                  octet_thuy: "12" }
+  - { vlan_num: 13, vlan_name: "DMZ_SRV_13",   dfgw: "10.0.13.254",  mask: "255.255.255.0", vlan_des: "Vlan cho vung DMZ",                                  octet_thuy: "13" }
+  - { vlan_num: 14, vlan_name: "VMOTION_14",   dfgw: "10.0.14.254",  mask: "255.255.255.0", vlan_des: "Vlan cho dich vu VMware vMotion",                    octet_thuy: "14" }
+  - { vlan_num: 15, vlan_name: "OOB_15",       dfgw: "10.0.15.254",  mask: "255.255.255.0", vlan_des: "Vlan cho viec quan tri ngoai bang (Out-Of-Band)",    octet_thuy: "15" }
+  - { vlan_num: 16, vlan_name: "SRV-MGMT_16",  dfgw: "10.0.16.254",  mask: "255.255.255.0", vlan_des: "Vlan cho viec quan tri may ao trong he thong ao hoa",octet_thuy: "16" }
+  - { vlan_num: 17, vlan_name: "DB_17",        dfgw: "10.0.17.254",  mask: "255.255.255.0", vlan_des: "Vlan cho cac may chu co so du lieu",                octet_thuy: "17" }
+  - { vlan_num: 18, vlan_name: "RESERVE_18",   dfgw: "10.0.18.254",  mask: "255.255.255.0", vlan_des: "Vlan danh cho du phong",                            octet_thuy: "18" }
+  - { vlan_num: 20, vlan_name: "PC-Printer_20", dfgw: "10.0.20.254",  mask: "255.255.255.0", vlan_des: "Vlan danh cho thiet bi PC, may in",                  octet_thuy: "20" }
+  - { vlan_num: 30, vlan_name: "IP-Phone_30",  dfgw: "10.0.30.254",  mask: "255.255.255.0", vlan_des: "Vlan cho IP Phone",                                  octet_thuy: "30" }
+  - { vlan_num: 40, vlan_name: "Wifi-Office_40",dfgw: "10.0.40.254",  mask: "255.255.252.0", vlan_des: "Vlan wifi nguoi dung noi bo",                        octet_thuy: "40" }
+  - { vlan_num: 45, vlan_name: "Wifi-Guest_45", dfgw: "10.0.45.254",  mask: "255.255.252.0", vlan_des: "Vlan wifi cho khach",                                octet_thuy: "45" }
+  - { vlan_num: 50, vlan_name: "CCTV_50",      dfgw: "10.0.50.254",  mask: "255.255.255.0", vlan_des: "Vlan cho he thong CAMERA",                           octet_thuy: "50" }
+  - { vlan_num: 55, vlan_name: "LAN-MGMT_55",  dfgw: "10.0.55.254",  mask: "255.255.255.0", vlan_des: "Vlan quan ly cac thiet bi Switch Access va Distribute",octet_thuy: "55" }
+  - { vlan_num: 60, vlan_name: "Tongdai_60",   dfgw: "10.0.60.254",  mask: "255.255.255.0", vlan_des: "Vlan cho cac may chu co so du lieu",                octet_thuy: "60" }
+  - { vlan_num: 70, vlan_name: "WIFI_MGMT_70", dfgw: "10.0.70.254",  mask: "255.255.255.0", vlan_des: "Vlan quanh ly cac thiet bi AP",                      octet_thuy: "70" }
+  - { vlan_num: 80, vlan_name: "Du_Phong1_80", dfgw: "10.0.80.254",  mask: "255.255.255.0", vlan_des: "Vlan danh cho du phong",                            octet_thuy: "80" }
+  - { vlan_num: 90, vlan_name: "Du_Phong2_90", dfgw: "10.0.90.254",  mask: "255.255.255.0", vlan_des: "Vlan danh cho du phong",                            octet_thuy: "90" }
+
+==============================
+FILE: ./inventories/lab/host_vars/192.168.80.57.yml
+==============================
+---
+device_hostname: "SW-ACC-01"
+
+==============================
+FILE: ./inventories/lab/host_vars/192.168.80.58.yml
+==============================
+---
+device_hostname: "SW-ACC-02"
+
+==============================
+FILE: ./inventories/lab/host_vars/192.168.80.56.yml
+==============================
+---
+device_hostname: "SW-CORE-02"
+sw_host_ip_last_octet: "253"
+vrrp_global_priority: 100
+
+==============================
+FILE: ./inventories/lab/host_vars/192.168.80.55.yml
+==============================
+---
+device_hostname: "SW-CORE-01"
+sw_host_ip_last_octet: "252"
+vrrp_global_priority: 110
+
+==============================
+FILE: ./inventories/lab/host_vars/192.168.80.59.yml
+==============================
+---
+device_hostname: "SW-ACC-03"
+
+==============================
+FILE: ./templates/juniper_junos/vlan.j2
+==============================
+
+==============================
+FILE: ./templates/ios/hostname.j2
+==============================
+hostname {{ device_hostname }}
+
+==============================
+FILE: ./templates/ios/vrrp.j2
+==============================
+! =======================================================
+! TEMPLATE CẤU HÌNH SVI IP & VRRP MẠNH MẼ - MASTER ON SW1
+! =======================================================
+{% for item in master_vlan_template %}
+interface Vlan{{ item.vlan_num }}
+ description {{ item.vlan_des }}
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.{{ item.octet_thuy }}.{{ sw_host_ip_last_octet }} {{ item.mask }}
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp {{ item.vlan_num }} ip 10.0.{{ item.octet_thuy }}.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+ {% if sw_host_ip_last_octet == "252" %}
+ vrrp {{ item.vlan_num }} priority 120
+ {% else %}
+ vrrp {{ item.vlan_num }} priority 100
+ {% endif %}
+ !
+ vrrp {{ item.vlan_num }} preempt
+!
+{% endfor %}
+
+==============================
+FILE: ./templates/ios/master_config.j2
+==============================
+! =======================================================
+! MASTER CONFIGURATION TEMPLATE - GENERATED BY ANSIBLE
+! Thiết bị: {{ inventory_hostname }}
+! =======================================================
+
+! --- TỰ ĐỘNG KHỞI TẠO VLAN DATABASE ---
+{% if enable_vlan_features is defined and enable_vlan_features == true %}
+{% for item in master_vlan_template %}
+vlan {{ item.vlan_num }}
+ name {{ item.vlan_name }}
+{% endfor %}
+{% endif %}
+
+! --- TỰ ĐỘNG CẤU HÌNH L3 INTERFACE VLAN & VRRP ---
+{% if enable_vlan_features is defined and enable_vlan_features == true %}
+{% for item in master_vlan_template %}
+interface Vlan{{ item.vlan_num }}
+ description {{ item.vlan_des }}
+ ! Tự động lắp ghép IP dựa trên mẫu mạng gốc và Host ID của từng Switch
+ ip address 10.0.{{ item.octet_thuy }}.{{ sw_host_ip_last_octet }} {{ item.mask }}
+ no shut
+ {% if enable_vrrp_features is defined and enable_vrrp_features == true %}
+ vrrp {{ item.vlan_num }} ip {{ item.dfgw }}
+ vrrp {{ item.vlan_num }} priority {{ vrrp_global_priority }}
+ vrrp {{ item.vlan_num }} preempt
+ {% endif %}
+!
+{% endfor %}
+{% endif %}
+
+==============================
+FILE: ./templates/ios/vlan.j2
+==============================
+! --- CONFIG VLAN DATABASE LAYER 2 ---
+{% for item in master_vlan_template %}
+vlan {{ item.vlan_num }}
+ name {{ item.vlan_name }}
+{% endfor %}
+
+==============================
+FILE: ./ansible.cfg
+==============================
+[defaults]
+roles_path = ./roles
+inventory = ./inventories/lab/hosts
+host_key_checking = False
+[persistent_connection]
+connect_timeout = 60
+command_timeout = 60
+
+==============================
+FILE: ./roles/vrrp/tasks/main.yml
+==============================
+---
+# =========================================================================
+# TÁC VỤ 1: RENDER VÀ NẠP CẤU HÌNH L3 SVI & VRRP MỚI
+# =========================================================================
+- name: Render cấu hình Interface Layer 3 IP & VRRP Gateway mới
+  template:
+    src: "{{ playbook_dir }}/../templates/ios/vrrp.j2"
+    dest: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_vrrp_l3.cfg"
+  delegate_to: localhost
+  when: inventory_hostname in groups['core_switches']
+
+- name: Đẩy cấu hình Layer 3 IP & VRRP mới xuống Switch Core
+  cisco.ios.ios_config:
+    src: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_vrrp_l3.cfg"
+  when: inventory_hostname in groups['core_switches']
+
+==============================
+FILE: ./roles/vlan/tasks/main.yml
+==============================
+---
+# =========================================================================
+# TÁC VỤ 1: LÀM SẠCH DATABASE VLAN (Giữ lại VLAN 1 quản trị)
+# =========================================================================
+- name: Xóa toàn bộ cấu hình VLAN cũ trên Switch (Trả về VLAN 1 mặc định)
+  cisco.ios.ios_config:
+    lines:
+      - "no vlan 2-4094"
+  # Task này sẽ gửi lệnh triệt hạ mọi VLAN từ ID 2 đến 4094, giữ nguyên VLAN 1
+
+# =========================================================================
+# TÁC VỤ 2: NẠP CẤU HÌNH VLAN MỚI THEO TEMPLATE DỮ LIỆU
+# =========================================================================
+- name: Render cấu hình VLAN Layer 2 mới
+  template:
+    src: "{{ playbook_dir }}/../templates/ios/vlan.j2"
+    dest: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_vlan_l2.cfg"
+  delegate_to: localhost
+
+- name: Đẩy cấu hình VLAN Layer 2 mới xuống Switch
+  cisco.ios.ios_config:
+    src: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_vlan_l2.cfg"
+
+==============================
+FILE: ./roles/ospf/tasks/main.yml
+==============================
+
+==============================
+FILE: ./generated_configs/192.168.80.58_vlan_l2.cfg
+==============================
+! --- CONFIG VLAN DATABASE LAYER 2 ---
+vlan 10
+ name STORAGE_10
+vlan 11
+ name TEST_11
+vlan 12
+ name APP_12
+vlan 13
+ name DMZ_SRV_13
+vlan 14
+ name VMOTION_14
+vlan 15
+ name OOB_15
+vlan 16
+ name SRV-MGMT_16
+vlan 17
+ name DB_17
+vlan 18
+ name RESERVE_18
+vlan 20
+ name PC-Printer_20
+vlan 30
+ name IP-Phone_30
+vlan 40
+ name Wifi-Office_40
+vlan 45
+ name Wifi-Guest_45
+vlan 50
+ name CCTV_50
+vlan 55
+ name LAN-MGMT_55
+vlan 60
+ name Tongdai_60
+vlan 70
+ name WIFI_MGMT_70
+vlan 80
+ name Du_Phong1_80
+vlan 90
+ name Du_Phong2_90
+
+==============================
+FILE: ./generated_configs/192.168.80.55_vlan_l2.cfg
+==============================
+! --- CONFIG VLAN DATABASE LAYER 2 ---
+vlan 10
+ name STORAGE_10
+vlan 11
+ name TEST_11
+vlan 12
+ name APP_12
+vlan 13
+ name DMZ_SRV_13
+vlan 14
+ name VMOTION_14
+vlan 15
+ name OOB_15
+vlan 16
+ name SRV-MGMT_16
+vlan 17
+ name DB_17
+vlan 18
+ name RESERVE_18
+vlan 20
+ name PC-Printer_20
+vlan 30
+ name IP-Phone_30
+vlan 40
+ name Wifi-Office_40
+vlan 45
+ name Wifi-Guest_45
+vlan 50
+ name CCTV_50
+vlan 55
+ name LAN-MGMT_55
+vlan 60
+ name Tongdai_60
+vlan 70
+ name WIFI_MGMT_70
+vlan 80
+ name Du_Phong1_80
+vlan 90
+ name Du_Phong2_90
+
+==============================
+FILE: ./generated_configs/192.168.80.59_vlan_l2.cfg
+==============================
+! --- CONFIG VLAN DATABASE LAYER 2 ---
+vlan 10
+ name STORAGE_10
+vlan 11
+ name TEST_11
+vlan 12
+ name APP_12
+vlan 13
+ name DMZ_SRV_13
+vlan 14
+ name VMOTION_14
+vlan 15
+ name OOB_15
+vlan 16
+ name SRV-MGMT_16
+vlan 17
+ name DB_17
+vlan 18
+ name RESERVE_18
+vlan 20
+ name PC-Printer_20
+vlan 30
+ name IP-Phone_30
+vlan 40
+ name Wifi-Office_40
+vlan 45
+ name Wifi-Guest_45
+vlan 50
+ name CCTV_50
+vlan 55
+ name LAN-MGMT_55
+vlan 60
+ name Tongdai_60
+vlan 70
+ name WIFI_MGMT_70
+vlan 80
+ name Du_Phong1_80
+vlan 90
+ name Du_Phong2_90
+
+==============================
+FILE: ./generated_configs/192.168.80.55_vrrp_l3.cfg
+==============================
+! =======================================================
+! TEMPLATE CẤU HÌNH SVI IP & VRRP MẠNH MẼ - MASTER ON SW1
+! =======================================================
+interface Vlan10
+ description Vlan cho ket noi giua he thong ao hoa va NAS
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.10.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 10 ip 10.0.10.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 10 priority 120
+  !
+ vrrp 10 preempt
+!
+interface Vlan11
+ description Vlan cho moi truong thu nghiem
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.11.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 11 ip 10.0.11.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 11 priority 120
+  !
+ vrrp 11 preempt
+!
+interface Vlan12
+ description Vlan cho cac may chu application
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.12.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 12 ip 10.0.12.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 12 priority 120
+  !
+ vrrp 12 preempt
+!
+interface Vlan13
+ description Vlan cho vung DMZ
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.13.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 13 ip 10.0.13.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 13 priority 120
+  !
+ vrrp 13 preempt
+!
+interface Vlan14
+ description Vlan cho dich vu VMware vMotion
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.14.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 14 ip 10.0.14.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 14 priority 120
+  !
+ vrrp 14 preempt
+!
+interface Vlan15
+ description Vlan cho viec quan tri ngoai bang (Out-Of-Band)
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.15.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 15 ip 10.0.15.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 15 priority 120
+  !
+ vrrp 15 preempt
+!
+interface Vlan16
+ description Vlan cho viec quan tri may ao trong he thong ao hoa
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.16.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 16 ip 10.0.16.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 16 priority 120
+  !
+ vrrp 16 preempt
+!
+interface Vlan17
+ description Vlan cho cac may chu co so du lieu
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.17.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 17 ip 10.0.17.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 17 priority 120
+  !
+ vrrp 17 preempt
+!
+interface Vlan18
+ description Vlan danh cho du phong
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.18.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 18 ip 10.0.18.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 18 priority 120
+  !
+ vrrp 18 preempt
+!
+interface Vlan20
+ description Vlan danh cho thiet bi PC, may in
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.20.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 20 ip 10.0.20.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 20 priority 120
+  !
+ vrrp 20 preempt
+!
+interface Vlan30
+ description Vlan cho IP Phone
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.30.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 30 ip 10.0.30.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 30 priority 120
+  !
+ vrrp 30 preempt
+!
+interface Vlan40
+ description Vlan wifi nguoi dung noi bo
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.40.252 255.255.252.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 40 ip 10.0.40.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 40 priority 120
+  !
+ vrrp 40 preempt
+!
+interface Vlan45
+ description Vlan wifi cho khach
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.45.252 255.255.252.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 45 ip 10.0.45.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 45 priority 120
+  !
+ vrrp 45 preempt
+!
+interface Vlan50
+ description Vlan cho he thong CAMERA
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.50.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 50 ip 10.0.50.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 50 priority 120
+  !
+ vrrp 50 preempt
+!
+interface Vlan55
+ description Vlan quan ly cac thiet bi Switch Access va Distribute
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.55.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 55 ip 10.0.55.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 55 priority 120
+  !
+ vrrp 55 preempt
+!
+interface Vlan60
+ description Vlan cho cac may chu co so du lieu
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.60.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 60 ip 10.0.60.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 60 priority 120
+  !
+ vrrp 60 preempt
+!
+interface Vlan70
+ description Vlan quanh ly cac thiet bi AP
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.70.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 70 ip 10.0.70.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 70 priority 120
+  !
+ vrrp 70 preempt
+!
+interface Vlan80
+ description Vlan danh cho du phong
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.80.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 80 ip 10.0.80.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 80 priority 120
+  !
+ vrrp 80 preempt
+!
+interface Vlan90
+ description Vlan danh cho du phong
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.90.252 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 90 ip 10.0.90.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 90 priority 120
+  !
+ vrrp 90 preempt
+!
+
+==============================
+FILE: ./generated_configs/192.168.80.56_vlan_l2.cfg
+==============================
+! --- CONFIG VLAN DATABASE LAYER 2 ---
+vlan 10
+ name STORAGE_10
+vlan 11
+ name TEST_11
+vlan 12
+ name APP_12
+vlan 13
+ name DMZ_SRV_13
+vlan 14
+ name VMOTION_14
+vlan 15
+ name OOB_15
+vlan 16
+ name SRV-MGMT_16
+vlan 17
+ name DB_17
+vlan 18
+ name RESERVE_18
+vlan 20
+ name PC-Printer_20
+vlan 30
+ name IP-Phone_30
+vlan 40
+ name Wifi-Office_40
+vlan 45
+ name Wifi-Guest_45
+vlan 50
+ name CCTV_50
+vlan 55
+ name LAN-MGMT_55
+vlan 60
+ name Tongdai_60
+vlan 70
+ name WIFI_MGMT_70
+vlan 80
+ name Du_Phong1_80
+vlan 90
+ name Du_Phong2_90
+
+==============================
+FILE: ./generated_configs/192.168.80.56_vrrp_l3.cfg
+==============================
+! =======================================================
+! TEMPLATE CẤU HÌNH SVI IP & VRRP MẠNH MẼ - MASTER ON SW1
+! =======================================================
+interface Vlan10
+ description Vlan cho ket noi giua he thong ao hoa va NAS
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.10.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 10 ip 10.0.10.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 10 priority 100
+  !
+ vrrp 10 preempt
+!
+interface Vlan11
+ description Vlan cho moi truong thu nghiem
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.11.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 11 ip 10.0.11.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 11 priority 100
+  !
+ vrrp 11 preempt
+!
+interface Vlan12
+ description Vlan cho cac may chu application
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.12.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 12 ip 10.0.12.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 12 priority 100
+  !
+ vrrp 12 preempt
+!
+interface Vlan13
+ description Vlan cho vung DMZ
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.13.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 13 ip 10.0.13.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 13 priority 100
+  !
+ vrrp 13 preempt
+!
+interface Vlan14
+ description Vlan cho dich vu VMware vMotion
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.14.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 14 ip 10.0.14.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 14 priority 100
+  !
+ vrrp 14 preempt
+!
+interface Vlan15
+ description Vlan cho viec quan tri ngoai bang (Out-Of-Band)
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.15.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 15 ip 10.0.15.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 15 priority 100
+  !
+ vrrp 15 preempt
+!
+interface Vlan16
+ description Vlan cho viec quan tri may ao trong he thong ao hoa
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.16.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 16 ip 10.0.16.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 16 priority 100
+  !
+ vrrp 16 preempt
+!
+interface Vlan17
+ description Vlan cho cac may chu co so du lieu
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.17.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 17 ip 10.0.17.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 17 priority 100
+  !
+ vrrp 17 preempt
+!
+interface Vlan18
+ description Vlan danh cho du phong
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.18.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 18 ip 10.0.18.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 18 priority 100
+  !
+ vrrp 18 preempt
+!
+interface Vlan20
+ description Vlan danh cho thiet bi PC, may in
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.20.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 20 ip 10.0.20.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 20 priority 100
+  !
+ vrrp 20 preempt
+!
+interface Vlan30
+ description Vlan cho IP Phone
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.30.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 30 ip 10.0.30.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 30 priority 100
+  !
+ vrrp 30 preempt
+!
+interface Vlan40
+ description Vlan wifi nguoi dung noi bo
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.40.253 255.255.252.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 40 ip 10.0.40.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 40 priority 100
+  !
+ vrrp 40 preempt
+!
+interface Vlan45
+ description Vlan wifi cho khach
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.45.253 255.255.252.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 45 ip 10.0.45.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 45 priority 100
+  !
+ vrrp 45 preempt
+!
+interface Vlan50
+ description Vlan cho he thong CAMERA
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.50.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 50 ip 10.0.50.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 50 priority 100
+  !
+ vrrp 50 preempt
+!
+interface Vlan55
+ description Vlan quan ly cac thiet bi Switch Access va Distribute
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.55.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 55 ip 10.0.55.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 55 priority 100
+  !
+ vrrp 55 preempt
+!
+interface Vlan60
+ description Vlan cho cac may chu co so du lieu
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.60.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 60 ip 10.0.60.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 60 priority 100
+  !
+ vrrp 60 preempt
+!
+interface Vlan70
+ description Vlan quanh ly cac thiet bi AP
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.70.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 70 ip 10.0.70.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 70 priority 100
+  !
+ vrrp 70 preempt
+!
+interface Vlan80
+ description Vlan danh cho du phong
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.80.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 80 ip 10.0.80.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 80 priority 100
+  !
+ vrrp 80 preempt
+!
+interface Vlan90
+ description Vlan danh cho du phong
+ ! Tự gán IP thật động theo Switch (.252 hoặc .253)
+ ip address 10.0.90.253 255.255.255.0
+ no shut
+ ! Cấu hình VRRP Virtual IP luôn là đuôi .254
+ vrrp 90 ip 10.0.90.254
+ !
+ ! Tự động tính toán độ ưu tiên: SW1 ăn Priority 120 (Master) trước cho tất cả VLAN
+  vrrp 90 priority 100
+  !
+ vrrp 90 preempt
+!
+
+==============================
+FILE: ./generated_configs/192.168.80.56_vrrp.cfg
+==============================
+! --- Cau hinh Gateway cho VLAN ---
+interface Vlan10
+ ip address 10.10.10.3 255.255.255.0
+ no shut
+ vrrp 10 ip 10.10.10.1
+ vrrp 10 priority 100
+ vrrp 10 preempt
+! ---------------------
+
+==============================
+FILE: ./generated_configs/192.168.80.55_vrrp.cfg
+==============================
+! --- Cau hinh Gateway cho VLAN ---
+interface Vlan10
+ ip address 10.10.10.2 255.255.255.0
+ no shut
+ vrrp 10 ip 10.10.10.1
+ vrrp 10 priority 110
+ vrrp 10 preempt
+! ---------------------
+
+==============================
+FILE: ./generated_configs/192.168.80.57_vlan_l2.cfg
+==============================
+! --- CONFIG VLAN DATABASE LAYER 2 ---
+vlan 10
+ name STORAGE_10
+vlan 11
+ name TEST_11
+vlan 12
+ name APP_12
+vlan 13
+ name DMZ_SRV_13
+vlan 14
+ name VMOTION_14
+vlan 15
+ name OOB_15
+vlan 16
+ name SRV-MGMT_16
+vlan 17
+ name DB_17
+vlan 18
+ name RESERVE_18
+vlan 20
+ name PC-Printer_20
+vlan 30
+ name IP-Phone_30
+vlan 40
+ name Wifi-Office_40
+vlan 45
+ name Wifi-Guest_45
+vlan 50
+ name CCTV_50
+vlan 55
+ name LAN-MGMT_55
+vlan 60
+ name Tongdai_60
+vlan 70
+ name WIFI_MGMT_70
+vlan 80
+ name Du_Phong1_80
+vlan 90
+ name Du_Phong2_90

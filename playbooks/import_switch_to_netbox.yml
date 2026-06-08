@@ -1,0 +1,104 @@
+---
+- name: LẤY CẤU HÌNH TỪ SWITCH THẬT VÀ TỰ ĐỘNG TẠO TRÊN NETBOX
+  hosts: brownfield_switches
+  gather_facts: no
+  vars:
+    # ⚠️ Cập nhật Token và Site của bạn tại đây
+    netbox_url: "http://localhost:8000"
+    netbox_token: "nbt_U50yW0FdkGaq.Jw5AEEphCT94JwvvHfdOIdGOGYcn8dWanuNnQWNw"
+    target_site: "Lab Hanoi"
+    target_role: "access_switches"
+
+  tasks:
+    # ==========================================
+    # PHẦN 1: BỎ QUA FACTS, CHỈ CÀO FILE CONFIG
+    # ==========================================
+    - name: 1. Đọc File Running-Config trực tiếp qua CLI
+      cisco.ios.ios_command:
+        commands: "show running-config"
+      register: switch_config
+
+    - name: 2. Lưu file cấu hình gốc ra thư mục backups
+      copy:
+        # Lấy kết quả đầu ra của lệnh đầu tiên (show run)
+        content: "{{ switch_config.stdout[0] }}"
+        dest: "{{ playbook_dir }}/../backups/{{ inventory_hostname }}_original_backup.cfg"
+      delegate_to: localhost
+
+    - name: 3. Hiển thị thông báo
+      debug:
+        msg: "Đã cào file cấu hình thành công! Bắt đầu tạo NetBox..."
+
+    # ==========================================
+    # PHẦN 2: ĐẨY DỮ LIỆU LÊN NETBOX
+    # ==========================================
+    - name: 4. Đảm bảo Loại thiết bị (Device Type) có tồn tại trên NetBox
+      netbox.netbox.netbox_device_type:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          manufacturer: "Cisco"
+          model: "C1200-24T-4X"
+        state: present
+      delegate_to: localhost
+    # ---> THÊM ĐOẠN NÀY VÀO ĐÂY <---
+    - name: 4b. Đảm bảo Vai trò (Device Role) có tồn tại trên NetBox
+      netbox.netbox.netbox_device_role:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ target_role }}"
+          color: "00bcd4"  # Màu xanh nước biển cho Access Switch
+        state: present
+      delegate_to: localhost
+    # ---------------------------------
+    - name: 5. Khởi tạo con Switch SW_BACKMA trên NetBox
+      netbox.netbox.netbox_device:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ inventory_hostname }}"
+          device_type: "C1200-24T-4X"
+          device_role: "{{ target_role }}"
+          site: "{{ target_site }}"
+          status: "active"
+        state: present
+      delegate_to: localhost
+
+    - name: 6a. Tự động tạo 24 Port GigabitEthernet (Đồng) bằng vòng lặp
+      netbox.netbox.netbox_device_interface:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          device: "{{ inventory_hostname }}"
+          name: "gi{{ item }}"  # Đặt tên theo chuẩn C1200 (gi1 -> gi24)
+          type: "1000base-t"
+        state: present
+      loop: "{{ range(1, 25) | list }}"
+      delegate_to: localhost
+
+    - name: 6b. Tự động tạo 4 Port 10G SFP+ (Quang) bằng vòng lặp
+      netbox.netbox.netbox_device_interface:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          device: "{{ inventory_hostname }}"
+          name: "te{{ item }}"  # Đặt tên cổng quang (te1 -> te4)
+          type: "10gbase-x-sfpp"
+        state: present
+      loop: "{{ range(1, 5) | list }}"
+      delegate_to: localhost
+
+    - name: 7. Gán địa chỉ IP Quản trị cho Switch trên NetBox
+      netbox.netbox.netbox_ip_address:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          address: "{{ ansible_host }}/24" 
+          status: "active"
+          assigned_object:
+            device: "{{ inventory_hostname }}"
+            name: "gi1" # Tạm gán vào cổng 1, có thể lên Web đổi sang Vlan1 sau
+        state: present
+      delegate_to: localhost
+      ignore_errors: yes

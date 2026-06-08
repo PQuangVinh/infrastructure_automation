@@ -1,0 +1,23 @@
+---
+- name: Tác vụ cấu hình Hostname toàn bộ hạ tầng
+  hosts: all_switches
+  gather_facts: no
+  tasks:
+    - name: Đổi Hostname thiết bị
+      cisco.ios.ios_config:
+        lines: "hostname {{ device_hostname }}"
+  tags: [hostname]
+
+- name: Tác vụ cấu hình VLAN Layer 2 cho toàn bộ hạ tầng
+  hosts: all_switches
+  gather_facts: no
+  roles:
+    - role: vlan
+  tags: [vlan]
+
+- name: Tác vụ cấu hình Layer 3 IP và VRRP cho dòng Switch Core
+  hosts: core_switches
+  gather_facts: no
+  roles:
+    - role: vrrp
+  tags: [vrrp]

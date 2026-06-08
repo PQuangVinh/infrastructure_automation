@@ -1,0 +1,180 @@
+name,device,enabled,type,description,mode,untagged_vlan,tagged_vlans,cf_port_role
+Et0/0,Location-TEST_C1-ACC-01,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-ACC-01,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/2,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et0/3,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/0,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/1,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/2,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/3,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/0,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/1,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/2,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/3,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/0,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/1,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/2,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/3,Location-TEST_C1-ACC-01,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+VLAN10,Location-TEST_C1-ACC-01,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-ACC-01,TRUE,virtual,,,,,
+Et0/0,Location-TEST_C1-ACC-02,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-ACC-02,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/2,Location-TEST_C1-ACC-02,TRUE,100base-tx,Downlink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/3,Location-TEST_C1-ACC-02,TRUE,100base-tx,Downlink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et1/0,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/1,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/2,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/3,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/0,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/1,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/2,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/3,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/0,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/1,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/2,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/3,Location-TEST_C1-ACC-02,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+VLAN10,Location-TEST_C1-ACC-02,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-ACC-02,TRUE,virtual,,,,,
+Et0/0,Location-TEST_C1-ACC-03,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-ACC-03,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/2,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et0/3,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/0,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/1,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/2,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/3,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/0,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/1,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/2,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/3,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/0,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/1,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/2,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/3,Location-TEST_C1-ACC-03,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+VLAN10,Location-TEST_C1-ACC-03,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-ACC-03,TRUE,virtual,,,,,
+Et0/0,Location-TEST_C1-ACC-04,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-ACC-04,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/2,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et0/3,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/0,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/1,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/2,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/3,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/0,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/1,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/2,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/3,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/0,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/1,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/2,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/3,Location-TEST_C1-ACC-04,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+VLAN10,Location-TEST_C1-ACC-04,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-ACC-04,TRUE,virtual,,,,,
+Et0/0,Location-TEST_C1-ACC-05,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-ACC-05,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/2,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et0/3,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/0,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/1,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/2,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/3,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/0,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/1,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/2,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/3,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/0,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/1,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/2,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/3,Location-TEST_C1-ACC-05,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+VLAN10,Location-TEST_C1-ACC-05,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-ACC-05,TRUE,virtual,,,,,
+Et0/0,Location-TEST_C1-ACC-06,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-ACC-06,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/2,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et0/3,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/0,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/1,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/2,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/3,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/0,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/1,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/2,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/3,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/0,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/1,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/2,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/3,Location-TEST_C1-ACC-06,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+VLAN10,Location-TEST_C1-ACC-06,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-ACC-06,TRUE,virtual,,,,,
+Et0/0,Location-TEST_C1-ACC-07,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-ACC-07,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/2,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et0/3,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/0,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/1,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/2,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/3,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/0,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/1,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/2,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/3,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/0,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/1,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/2,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/3,Location-TEST_C1-ACC-07,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+VLAN10,Location-TEST_C1-ACC-07,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-ACC-07,TRUE,virtual,,,,,
+Et0/0,Location-TEST_C1-ACC-08,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-ACC-08,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/3,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/0,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/1,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/2,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/3,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/0,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/1,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/2,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/3,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/0,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/1,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/2,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/3,Location-TEST_C1-ACC-08,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+VLAN10,Location-TEST_C1-ACC-08,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-ACC-08,TRUE,virtual,,,,,
+Et0/0,Location-TEST_C1-ACC-09,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-ACC-09,TRUE,100base-tx,Uplink to Distribution/Core Switch,tagged,,"1,10,20",UPLINK
+Et0/2,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et0/3,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/0,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/1,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/2,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et1/3,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/0,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/1,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/2,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et2/3,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/0,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/1,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/2,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+Et3/3,Location-TEST_C1-ACC-09,TRUE,100base-tx,CCTV Camera,access,20,,CAMERA
+VLAN10,Location-TEST_C1-ACC-09,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-ACC-09,TRUE,virtual,,,,,
+Et0/0,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et0/1,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et0/2,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et0/3,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et1/0,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et1/1,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et1/2,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et1/3,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et2/0,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et2/1,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et2/2,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et2/3,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et3/0,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et3/1,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et3/2,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+Et3/3,Location-TEST_C1-CORE-01,TRUE,100base-tx,Downlink to Sw-acc,tagged,,"1,10,20",UPLINK
+VLAN10,Location-TEST_C1-CORE-01,TRUE,virtual,,,,,
+VLAN1,Location-TEST_C1-CORE-01,TRUE,virtual,,,,,

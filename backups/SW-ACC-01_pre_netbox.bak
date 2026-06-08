@@ -1,0 +1,103 @@
+Building configuration...
+
+Current configuration : 1479 bytes
+!
+! Last configuration change at 14:26:25 UTC Thu May 28 2026 by admin
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+service compress-config
+!
+hostname SW-ACC-01
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 5 $1$S30E$DBEa67jDMa.8IxX6YH9Hf0
+!
+username admin privilege 15 secret 5 $1$0Ow5$aSVYJnWfief.kadS0hLnc1
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+!
+ip domain-name lab.local
+ip cef
+no ipv6 cef
+!
+!
+!
+spanning-tree mode pvst
+spanning-tree extend system-id
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Ethernet0/0
+ no switchport
+ ip address 192.168.80.57 255.255.255.0
+!
+interface Ethernet0/1
+ switchport trunk allowed vlan 10,20,30,40,50,99
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+!
+interface Ethernet0/2
+ description USER | PC-PhongKeToan-01
+ switchport access vlan 20
+ switchport mode access
+ spanning-tree portfast edge
+!
+interface Ethernet0/3
+ description USER | PC-PhongKeToan-02
+ switchport access vlan 30
+ switchport mode access
+ spanning-tree portfast edge
+!
+interface Vlan99
+ ip address 20.20.99.10 255.255.255.0
+!
+ip default-gateway 20.20.99.254
+ip forward-protocol nd
+!
+ip http server
+ip http secure-server
+!
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!
+!
+!
+!
+!
+control-plane
+!
+!
+line con 0
+ logging synchronous
+line aux 0
+line vty 0 4
+ login local
+ transport input ssh
+!
+!
+!
+end

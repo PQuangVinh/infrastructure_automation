@@ -1,0 +1,42 @@
+---
+- name: ĐỒNG BỘ CẤU HÌNH TỪ NETBOX XUỐNG THIẾT BỊ MẠNG
+  hosts: all  # Đảm bảo bạn đã map group này trong netbox_inventory.yml
+  gather_facts: no
+  vars:
+    # Cấu hình API kết nối đến NetBox của bạn
+    netbox_url: "http://localhost:8000"
+    netbox_token: "nbt_U50yW0FdkGaq.Jw5AEEphCT94JwvvHfdOIdGOGYcn8dWanuNnQWNw"
+
+  tasks:
+    # ---------------------------------------------------------
+    # BƯỚC 1: KÉO DỮ LIỆU TỪ NETBOX QUA API (Sử dụng nb_lookup)
+    # ---------------------------------------------------------
+    - name: 1.1. Lấy toàn bộ danh sách VLAN (từ nhóm SCH_VLAN_Group)
+      set_fact:
+        nb_vlans: "{{ query('netbox.netbox.nb_lookup', 'vlans', api_endpoint=netbox_url, token=netbox_token) }}"
+      delegate_to: localhost
+
+    - name: 1.2. Lấy chi tiết toàn bộ Interface của chính Switch này
+      set_fact:
+        nb_interfaces: "{{ query('netbox.netbox.nb_lookup', 'interfaces', api_endpoint=netbox_url, token=netbox_token, api_filter='device=' ~ inventory_hostname) }}"
+      delegate_to: localhost
+
+    # ---------------------------------------------------------
+    # BƯỚC 2: KẾT HỢP DỮ LIỆU VỚI TEMPLATE ĐỂ RENDER CẤU HÌNH
+    # ---------------------------------------------------------
+    - name: 2. Render cấu hình CLI hoàn chỉnh lưu vào thư mục generated_configs
+      template:
+        src: "{{ playbook_dir }}/../templates/ios/netbox_sync.j2"
+        dest: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_netbox_sync.cfg"
+      delegate_to: localhost
+
+    # ---------------------------------------------------------
+    # BƯỚC 3: ĐẨY CẤU HÌNH XUỐNG SWITCH THẬT
+    # ---------------------------------------------------------
+    - name: 3. Đẩy cấu hình từ file đã render xuống Switch Cisco
+      cisco.ios.ios_config:
+        src: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_netbox_sync.cfg"
+        backup: yes
+        backup_options:
+          filename: "{{ inventory_hostname }}_pre_netbox.bak"
+          dir_path: "{{ playbook_dir }}/../backups"

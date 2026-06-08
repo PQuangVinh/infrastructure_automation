@@ -1,0 +1,14 @@
+plugin: netbox.netbox.nb_inventory
+api_endpoint: http://localhost:8000
+token: nbt_U50yW0FdkGaq.Jw5AEEphCT94JwvvHfdOIdGOGYcn8dWanuNnQWNw
+config_context: False
+
+group_by:
+  - device_roles
+
+compose:
+  # Cắt bỏ phần Subnet Mask (/24), chỉ lấy đúng chuỗi IP để SSH
+  ansible_host: primary_ip4.address.split('/')[0] if primary_ip4 is defined else name
+  ansible_network_os: "'ios'"
+  ansible_user: "'admin'"
+  ansible_password: "'cisco'"

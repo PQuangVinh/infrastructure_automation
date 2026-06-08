@@ -1,0 +1,16 @@
+# ==========================================
+# CẤU HÌNH KẾT NỐI CHUNG CHO THIẾT BỊ MẠNG
+# ==========================================
+ansible_connection: network_cli
+ansible_network_os: cisco.ios.ios
+
+
+# Thông tin đăng nhập
+ansible_user: "admin"
+ansible_password: "cisco"
+ansible_become: yes
+ansible_become_method: enable
+ansible_become_password: "cisco"
+
+ansible_command_timeout: 180
+ansible_connect_timeout: 180

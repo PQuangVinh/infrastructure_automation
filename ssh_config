@@ -1,0 +1,7 @@
+Host 192.168.100.100
+    KexAlgorithms +diffie-hellman-group1-sha1,diffie-hellman-group14-sha1
+    HostKeyAlgorithms +ssh-rsa
+    PubkeyAcceptedKeyTypes +ssh-rsa
+    Ciphers +aes128-cbc,3des-cbc
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null

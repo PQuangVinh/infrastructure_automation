@@ -1,0 +1,83 @@
+---
+- name: Tự động hóa khai báo hạ tầng lên NetBox via API
+  hosts: localhost
+  gather_facts: no
+  vars:
+    netbox_url: "http://localhost:8000"
+    netbox_token: "nbt_U50yW0FdkGaq.Jw5AEEphCT94JwvvHfdOIdGOGYcn8dWanuNnQWNw"
+
+  tasks:
+    - name: 1. Tạo Site Lab Hanoi
+      netbox.netbox.netbox_site:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data: { name: "Lab Hanoi" }
+        state: present
+
+    - name: 2. Tạo Nhà sản xuất Cisco
+      netbox.netbox.netbox_manufacturer:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data: { name: "Cisco" }
+        state: present
+
+    - name: 3. Tạo Vai trò core_switches
+      netbox.netbox.netbox_device_role:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "core_switches"
+          color: "f44336"
+        state: present
+
+    - name: 4. Tạo Loại thiết bị IOSv
+      netbox.netbox.netbox_device_type:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          manufacturer: "Cisco"
+          model: "IOSv"
+        state: present
+
+    - name: 5. Khởi tạo thực thể Thiết bị SW-CORE-01
+      netbox.netbox.netbox_device:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "SW-CORE-01"
+          device_type: "IOSv"
+          device_role: "core_switches"
+          site: "Lab Hanoi"
+          status: "active"
+        state: present
+
+    - name: 6. Tạo cổng vật lý Ethernet0/1 trên SW-CORE-01
+      netbox.netbox.netbox_device_interface:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          device: "SW-CORE-01"
+          name: "Ethernet0/1"
+          type: "100base-tx"
+        state: present
+
+    - name: 7. Đảm bảo IP 192.168.80.55/24 được gán vào cổng
+      netbox.netbox.netbox_ip_address:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          address: "192.168.80.55/24"
+          assigned_object:
+            device: "SW-CORE-01"
+            name: "Ethernet0/1"
+        state: present
+      ignore_errors: yes
+
+    - name: 8. Chốt IP làm Primary cho SW-CORE-01
+      netbox.netbox.netbox_device:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "SW-CORE-01"
+          primary_ip4: "192.168.80.55/24"
+        state: present

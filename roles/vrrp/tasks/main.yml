@@ -1,0 +1,33 @@
+---
+# =========================================================================
+# TÁC VỤ 1: RENDER CONFIG MONG MUỐN (Lưu cục bộ tại Ansible Controller)
+# =========================================================================
+- name: 1. Render cấu hình Interface Layer 3 IP & VRRP Gateway mong muốn
+  template:
+    src: "{{ playbook_dir }}/../templates/ios/vrrp.j2"
+    dest: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_vrrp_l3.cfg"
+  delegate_to: localhost
+  when: inventory_hostname in groups['core_switches']
+
+# =========================================================================
+# TÁC VỤ 2: KIỂM TRA ĐỐI CHIẾU VÀ CHỈ ĐẨY PHẦN CÒN THIẾU
+# =========================================================================
+- name: 2. Đối chiếu Running-config và chỉ gán các lệnh còn thiếu
+  cisco.ios.ios_config:
+    src: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_vrrp_l3.cfg"
+    backup: yes  # Tự động kéo running-config hiện tại về làm file backup trước
+    backup_options:
+      filename: "{{ inventory_hostname }}_running_config.bak"
+      dir_path: "{{ playbook_dir }}/../backups"
+  when: inventory_hostname in groups['core_switches']
+  register: vrrp_diff_result
+
+# =========================================================================
+# TÁC VỤ 3: IN RA MÀN HÌNH CÁC DÒNG LỆNH THỪA THIẾU (ĐỂ REVIEW)
+# =========================================================================
+- name: 3. Hiển thị chi tiết các dòng lệnh sẽ được bổ sung
+  debug:
+    msg: "{{ vrrp_diff_result.updates }}"
+  when: 
+    - inventory_hostname in groups['core_switches']
+    - vrrp_diff_result.updates is defined

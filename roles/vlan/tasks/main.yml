@@ -1,0 +1,29 @@
+---
+# =========================================================================
+# TÁC VỤ 1: RENDER DANH SÁCH VLAN MONG MUỐN
+# =========================================================================
+- name: 1. Render cấu hình danh sách VLAN lớp 2 mong muốn
+  template:
+    src: "{{ playbook_dir }}/../templates/ios/vlan.j2"
+    dest: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_vlan_l2.cfg"
+  delegate_to: localhost
+
+# =========================================================================
+# TÁC VỤ 2: SO SÁNH DATABASE VLAN VÀ CHỈ THÊM VLAN THIẾU
+# =========================================================================
+- name: 2. Đối chiếu Database VLAN trên Switch và chỉ gán VLAN còn thiếu
+  cisco.ios.ios_config:
+    src: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_vlan_l2.cfg"
+    backup: yes
+    backup_options:
+      filename: "{{ inventory_hostname }}_vlan_database.bak"
+      dir_path: "{{ playbook_dir }}/../backups"
+  register: vlan_diff_result
+
+# =========================================================================
+# TÁC VỤ 3: IN DANH SÁCH LỆNH VLAN BỔ SUNG
+# =========================================================================
+- name: 3. Hiển thị chi tiết các VLAN sẽ được tạo thêm
+  debug:
+    msg: "{{ vlan_diff_result.updates }}"
+  when: vlan_diff_result.updates is defined

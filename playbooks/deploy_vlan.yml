@@ -1,0 +1,15 @@
+---
+- name: Triển khai cấu hình VLAN Layer 2 cho Switch mới
+  # Chỉ target trực tiếp vào IP này để an toàn, không ảnh hưởng hệ thống cũ
+  hosts: 192.168.100.100 
+  gather_facts: no
+  
+  tasks:
+    # Bước 1: Đổi Hostname (Tùy chọn)
+    - name: Đổi Hostname thiết bị
+      cisco.ios.ios_config:
+        lines: "hostname {{ device_hostname }}"
+
+  # Bước 2: Gọi Role cấu hình VLAN
+  roles:
+    - role: vlan

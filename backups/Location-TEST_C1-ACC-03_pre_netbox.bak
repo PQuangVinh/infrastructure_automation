@@ -1,0 +1,130 @@
+Building configuration...
+
+Current configuration : 1855 bytes
+!
+! Last configuration change at 04:24:03 UTC Thu Jun 4 2026 by admin
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+service compress-config
+!
+hostname Location-TEST_C1-ACC-03
+!
+boot-start-marker
+boot-end-marker
+!
+!
+!
+username admin privilege 15 secret 5 $1$XQrl$12OI0.In/VlmtrL/Vv5o/1
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+!
+ip domain-name local.lab
+ip cef
+no ipv6 cef
+!
+!
+!
+spanning-tree mode pvst
+spanning-tree extend system-id
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Ethernet0/0
+ description Uplink to Distribution/Core Switch
+ switchport trunk allowed vlan 1,10,20
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+!
+interface Ethernet0/1
+ description Uplink to Distribution/Core Switch
+ switchport trunk allowed vlan 1,10,20
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+!
+interface Ethernet0/2
+ description CCTV Camera
+ switchport access vlan 20
+ switchport mode access
+ spanning-tree portfast edge
+!
+interface Ethernet0/3
+ description CCTV Camera
+ switchport access vlan 20
+ switchport mode access
+ spanning-tree portfast edge
+!
+interface Ethernet1/0
+!
+interface Ethernet1/1
+!
+interface Ethernet1/2
+!
+interface Ethernet1/3
+!
+interface Ethernet2/0
+!
+interface Ethernet2/1
+!
+interface Ethernet2/2
+!
+interface Ethernet2/3
+!
+interface Ethernet3/0
+!
+interface Ethernet3/1
+!
+interface Ethernet3/2
+!
+interface Ethernet3/3
+!
+interface Vlan1
+ ip address 192.168.80.13 255.255.255.0
+!
+ip default-gateway 192.168.80.254
+ip forward-protocol nd
+!
+ip http server
+ip http secure-server
+!
+ip ssh version 2
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!
+!
+!
+!
+!
+control-plane
+!
+!
+line con 0
+ logging synchronous
+line aux 0
+line vty 0 4
+ login local
+ transport input ssh
+!
+!
+!
+end

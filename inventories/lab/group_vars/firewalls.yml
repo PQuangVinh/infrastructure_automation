@@ -1,0 +1,7 @@
+ansible_network_os: fortinet.fortios.fortios
+# Chuyển sang network_cli để đẩy lệnh trực tiếp
+ansible_connection: network_cli 
+ansible_user: "admin"
+ansible_password: "IUNI@53rv1c3" # Dùng mật khẩu admin thay cho token
+ansible_command_timeout: 60
+ansible_connect_timeout: 60

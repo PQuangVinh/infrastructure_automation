@@ -1,0 +1,11 @@
+name,device_type,status,site,role,manufacturer
+Location-TEST_C1-CORE-01,TEST_C1,active,CHUNGCU,CORE_SW,Cisco
+Location-TEST_C1-ACC-01,TEST_C1,active,CHUNGCU,ACC_SW,Cisco
+Location-TEST_C1-ACC-02,TEST_C1,active,CHUNGCU,ACC_SW,Cisco
+Location-TEST_C1-ACC-03,TEST_C1,active,CHUNGCU,ACC_SW,Cisco
+Location-TEST_C1-ACC-04,TEST_C1,active,CHUNGCU,ACC_SW,Cisco
+Location-TEST_C1-ACC-05,TEST_C1,active,CHUNGCU,ACC_SW,Cisco
+Location-TEST_C1-ACC-06,TEST_C1,active,CHUNGCU,ACC_SW,Cisco
+Location-TEST_C1-ACC-07,TEST_C1,active,CHUNGCU,ACC_SW,Cisco
+Location-TEST_C1-ACC-08,TEST_C1,active,CHUNGCU,ACC_SW,Cisco
+Location-TEST_C1-ACC-09,TEST_C1,active,CHUNGCU,ACC_SW,Cisco

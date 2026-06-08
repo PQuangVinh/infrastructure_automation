@@ -1,0 +1,223 @@
+Building configuration...
+
+Current configuration : 4246 bytes
+!
+! Last configuration change at 06:01:25 UTC Fri May 22 2026 by admin
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+service compress-config
+!
+hostname SW-CORE-01
+!
+boot-start-marker
+boot-end-marker
+!
+!
+!
+username admin privilege 15 secret 5 $1$9W6h$cXFGpKX314gWM4XacWE.f1
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+!
+ip domain-name lab.local
+ip cef
+no ipv6 cef
+!
+!
+!
+spanning-tree mode pvst
+spanning-tree extend system-id
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Ethernet0/0
+ switchport access vlan 10
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+!
+interface Ethernet0/1
+!
+interface Ethernet0/2
+ switchport access vlan 10
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+!
+interface Ethernet0/3
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+!
+interface Ethernet1/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+!
+interface Ethernet1/1
+ no switchport
+ ip address 192.168.80.55 255.255.255.0
+!
+interface Ethernet1/2
+!
+interface Ethernet1/3
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+interface Vlan10
+ description Vlan cho ket noi giua he thong ao hoa va NAS
+ ip address 10.0.10.252 255.255.255.0
+ vrrp 10 ip 10.0.10.254
+ vrrp 10 priority 120
+!
+interface Vlan11
+ description Vlan cho moi truong thu nghiem
+ ip address 10.0.11.252 255.255.255.0
+ vrrp 11 ip 10.0.11.254
+ vrrp 11 priority 120
+!
+interface Vlan12
+ description Vlan cho cac may chu application
+ ip address 10.0.12.252 255.255.255.0
+ vrrp 12 ip 10.0.12.254
+ vrrp 12 priority 120
+!
+interface Vlan13
+ description Vlan cho vung DMZ
+ ip address 10.0.13.252 255.255.255.0
+ vrrp 13 ip 10.0.13.254
+ vrrp 13 priority 120
+!
+interface Vlan14
+ description Vlan cho dich vu VMware vMotion
+ ip address 10.0.14.252 255.255.255.0
+ vrrp 14 ip 10.0.14.254
+ vrrp 14 priority 120
+!
+interface Vlan15
+ description Vlan cho viec quan tri ngoai bang (Out-Of-Band)
+ ip address 10.0.15.252 255.255.255.0
+ vrrp 15 ip 10.0.15.254
+ vrrp 15 priority 120
+!
+interface Vlan16
+ description Vlan cho viec quan tri may ao trong he thong ao hoa
+ ip address 10.0.16.252 255.255.255.0
+ vrrp 16 ip 10.0.16.254
+ vrrp 16 priority 120
+!
+interface Vlan17
+ description Vlan cho cac may chu co so du lieu
+ ip address 10.0.17.252 255.255.255.0
+ vrrp 17 ip 10.0.17.254
+ vrrp 17 priority 120
+!
+interface Vlan18
+ description Vlan danh cho du phong
+ ip address 10.0.18.252 255.255.255.0
+ vrrp 18 ip 10.0.18.254
+ vrrp 18 priority 120
+!
+interface Vlan20
+ description Vlan danh cho thiet bi PC, may in
+ ip address 10.0.20.252 255.255.255.0
+ vrrp 20 ip 10.0.20.254
+ vrrp 20 priority 120
+!
+interface Vlan30
+ description Vlan cho IP Phone
+ ip address 10.0.30.252 255.255.255.0
+ vrrp 30 ip 10.0.30.254
+ vrrp 30 priority 120
+!
+interface Vlan40
+ description Vlan wifi nguoi dung noi bo
+ ip address 10.0.40.252 255.255.252.0
+ vrrp 40 ip 10.0.40.254
+ vrrp 40 priority 120
+!
+interface Vlan45
+ description Vlan wifi cho khach
+ ip address 10.0.45.252 255.255.252.0
+ vrrp 45 ip 10.0.45.254
+ vrrp 45 priority 120
+!
+interface Vlan50
+ description Vlan cho he thong CAMERA
+ ip address 10.0.50.252 255.255.255.0
+ vrrp 50 ip 10.0.50.254
+ vrrp 50 priority 120
+!
+interface Vlan55
+ description Vlan quan ly cac thiet bi Switch Access va Distribute
+ ip address 10.0.55.252 255.255.255.0
+ vrrp 55 ip 10.0.55.254
+ vrrp 55 priority 120
+!
+interface Vlan60
+ description Vlan cho cac may chu co so du lieu
+ ip address 10.0.60.252 255.255.255.0
+ vrrp 60 ip 10.0.60.254
+ vrrp 60 priority 120
+!
+interface Vlan70
+ description Vlan quanh ly cac thiet bi AP
+ ip address 10.0.70.252 255.255.255.0
+ vrrp 70 ip 10.0.70.254
+ vrrp 70 priority 120
+!
+interface Vlan80
+ description Vlan danh cho du phong
+ ip address 10.0.80.252 255.255.255.0
+ vrrp 80 ip 10.0.80.254
+ vrrp 80 priority 120
+!
+interface Vlan90
+ description Vlan danh cho du phong
+ ip address 10.0.90.252 255.255.255.0
+ vrrp 90 ip 10.0.90.254
+ vrrp 90 priority 120
+!
+ip forward-protocol nd
+!
+ip http server
+ip http secure-server
+!
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!
+!
+!
+!
+!
+control-plane
+!
+!
+line con 0
+ logging synchronous
+line aux 0
+line vty 0 4
+ login local
+ transport input ssh
+!
+!
+!
+end

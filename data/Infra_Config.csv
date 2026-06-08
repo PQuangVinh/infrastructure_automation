@@ -1,0 +1,4 @@
+prefix	status	vlan
+10.0.10.0/24	active	10
+10.0.20.0/24	active	20
+		"=XLOOKUP([@vlan],tbl_vlan[vid],tbl_vlan[name])"

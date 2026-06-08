@@ -1,0 +1,14 @@
+! =======================================================
+! TEMPLATE CẤU HÌNH SVI IP & VRRP CHUẨN KHỚP SHOW RUN 100%
+! =======================================================
+{% for item in master_vlan_template %}
+interface Vlan{{ item.vlan_num }}
+ description {{ item.vlan_des }}
+ ip address 10.0.{{ item.octet_thuy }}.{{ sw_host_ip_last_octet }} {{ item.mask }}
+ vrrp {{ item.vlan_num }} ip 10.0.{{ item.octet_thuy }}.254
+{% if sw_host_ip_last_octet == "252" %}
+ vrrp {{ item.vlan_num }} priority 120
+ vrrp {{ item.vlan_num }} preempt
+{% endif %}
+!
+{% endfor %}

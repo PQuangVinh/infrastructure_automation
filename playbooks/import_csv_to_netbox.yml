@@ -1,0 +1,236 @@
+---
+- name: IMPORT TRỰC TIẾP FILE CSV TỪ EXCEL VÀO NETBOX
+  hosts: localhost
+  gather_facts: no
+  vars:
+    netbox_url: "http://localhost:8000"
+    netbox_token: "nbt_U50yW0FdkGaq.Jw5AEEphCT94JwvvHfdOIdGOGYcn8dWanuNnQWNw"
+    csv_dir: "{{ playbook_dir }}/../data"
+
+  tasks:
+    # ==============================================================
+    # BƯỚC 1: SITES & LOCATIONS
+    # ==============================================================
+    - name: 1.1 Đọc file Sites
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_sites.csv"
+      register: csv_sites
+
+    - name: 1.2 Import Sites qua API vào NetBox
+      netbox.netbox.netbox_site:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ item.name }}"
+          status: "active"
+        state: present
+      loop: "{{ csv_sites.list }}"
+
+    - name: 1.3 Đọc file Locations
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_locations.csv"
+      register: csv_locations
+
+    - name: 1.4 Import Locations qua API vào NetBox
+      netbox.netbox.netbox_location:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ item.name }}"
+          site: "{{ item.site }}"
+          status: "active"
+        state: present
+      loop: "{{ csv_locations.list }}"
+
+    # ==============================================================
+    # BƯỚC 2: VLANS & PREFIXES
+    # ==============================================================
+    - name: 2.1 Đọc file VLANs
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_vlan.csv"
+      register: csv_vlans
+
+    - name: 2.2 Import VLANs qua API vào NetBox
+      netbox.netbox.netbox_vlan:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ item.name }}"
+          vid: "{{ item.vid | int }}"
+          status: "active"
+        state: present
+      loop: "{{ csv_vlans.list }}"
+
+    - name: 2.3 Đọc file Prefixes
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_prefixes.csv"
+      register: csv_prefixes
+
+    - name: 2.4 Import Prefixes qua API vào NetBox
+      netbox.netbox.netbox_prefix:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          prefix: "{{ item.prefix }}"
+          status: "active"
+        state: present
+      loop: "{{ csv_prefixes.list }}"
+
+    # ==============================================================
+    # BƯỚC 3: MANUFACTURERS, TYPES, ROLES, RACKS & DEVICES
+    # ==============================================================
+    - name: 3.1 Đọc file Manufacturers
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_manufacturers.csv"
+      register: csv_manufacturers
+
+    - name: 3.2 Import Manufacturers qua API vào NetBox
+      netbox.netbox.netbox_manufacturer:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ item.name }}"
+        state: present
+      loop: "{{ csv_manufacturers.list }}"
+
+    - name: 3.3 Đọc file Device Types
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_device-types.csv"
+      register: csv_types
+
+    - name: 3.4 Import Device Types qua API vào NetBox
+      netbox.netbox.netbox_device_type:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          manufacturer: "{{ item.manufacturer }}"
+          model: "{{ item.model }}"
+        state: present
+      loop: "{{ csv_types.list }}"
+
+    - name: 3.5 Đọc file Device Roles
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_device-roles.csv"
+      register: csv_roles
+
+    - name: 3.6 Import Device Roles qua API vào NetBox
+      netbox.netbox.netbox_device_role:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ item.name }}"
+          color: "{{ item.color }}"
+        state: present
+      loop: "{{ csv_roles.list }}"
+
+    - name: 3.7 Đọc file Racks
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_racks.csv"
+      register: csv_racks
+
+    - name: 3.8 Import Racks qua API vào NetBox
+      netbox.netbox.netbox_rack:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ item.name | trim }}"
+          site: "{{ item.site }}"
+          location: "{{ item.location | default(omit) }}"
+          status: "active"
+          width: "{{ item.width | int }}"
+          u_height: "{{ item.u_height | int }}"
+        state: present
+      loop: "{{ csv_racks.list }}"
+
+    - name: 3.9 Đọc file Devices
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_devices.csv"
+      register: csv_devices
+
+    - name: 3.10 Khởi tạo Thiết bị (Devices) vào NetBox
+      netbox.netbox.netbox_device:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ item.name }}"
+          device_type: "{{ item.device_type }}"
+          device_role: "{{ item.device_role }}"
+          site: "{{ item.site }}"
+          location: "{{ item.location | default(omit) }}"
+          rack: "{{ item.rack | trim | default(omit) }}"
+          status: "active"
+        state: present
+      loop: "{{ csv_devices.list }}"
+
+    - name: 3.11 Đọc file Interfaces
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_interfaces.csv"
+      register: csv_interfaces
+
+    - name: 3.12 Tạo Interfaces cho từng Thiết bị
+      netbox.netbox.netbox_device_interface:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          device: "{{ item.device }}"
+          name: "{{ item.name }}"
+          type: "{{ item.type }}"
+          enabled: "{{ item.enabled | bool }}"
+          description: "{{ item.description | default(omit) }}"
+          mode: "{{ item.mode | default(omit) }}"
+        state: present
+      loop: "{{ csv_interfaces.list }}"
+
+    - name: 3.13 Đọc file IP Addresses
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_IP-addresses.csv"
+      register: csv_ips
+
+    - name: 3.14 Gán Địa chỉ IP vào Interface của Thiết bị
+      netbox.netbox.netbox_ip_address:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          address: "{{ item.address }}"
+          status: "active"
+          assigned_object:
+            device: "{{ item.device }}"
+            name: "{{ item.interface }}"
+        state: present
+      loop: "{{ csv_ips.list }}"
+
+    - name: 3.15 Chốt Primary IPv4 cho Thiết bị mạng
+      netbox.netbox.netbox_device:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ item.device }}"
+          primary_ip4: "{{ item.address }}"
+        state: present
+      loop: "{{ csv_ips.list }}"
+      when: item.is_primary | bool
+
+    # ==============================================================
+    # BƯỚC 4: KẾT NỐI CÁP VẬT LÝ (CABLES)
+    # ==============================================================
+    - name: 4.1 Đọc file Cables
+      community.general.read_csv:
+        path: "{{ csv_dir }}/Infra_config.xlsx - tbl_netbox-cables.csv"
+      register: csv_cables
+
+    - name: 4.2 Tiến hành Đấu nối Cáp vật lý giữa các cổng Switch
+      netbox.netbox.netbox_cable:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          termination_a_type: "{{ item.side_a_type }}"
+          termination_a:
+            device: "{{ item.side_a_device }}"
+            name: "{{ item.side_a_name }}"
+          termination_b_type: "{{ item.side_b_type }}"
+          termination_b:
+            device: "{{ item.side_b_device }}"
+            name: "{{ item.side_b_name }}"
+          status: "connected"
+        state: present
+      loop: "{{ csv_cables.list }}"

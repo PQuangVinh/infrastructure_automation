@@ -1,0 +1,30 @@
+---
+# Đẩy cấu hình Hostname qua CLI
+- name: 1. Cấu hình Hostname
+  fortinet.fortios.fortios_config:
+    config: |
+      config system global
+        set hostname {{ device_hostname }}
+      end
+
+# Đẩy cấu hình Interface qua CLI
+- name: 2. Cấu hình Interface WAN
+  fortinet.fortios.fortios_config:
+    config: |
+      config system interface
+        edit "wan1"
+          set ip {{ wan_ip }} {{ wan_mask }}
+          set allowaccess ping https ssh
+        next
+      end
+
+# Đẩy cấu hình Static Route qua CLI
+- name: 3. Cấu hình Default Route
+  fortinet.fortios.fortios_config:
+    config: |
+      config router static
+        edit 1
+          set device "wan1"
+          set gateway {{ wan_gateway }}
+        next
+      end

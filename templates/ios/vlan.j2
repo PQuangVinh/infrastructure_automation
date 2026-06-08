@@ -1,0 +1,5 @@
+! --- CONFIG VLAN DATABASE LAYER 2 ---
+{% for item in master_vlan_template %}
+vlan {{ item.vlan_num }}
+ name {{ item.vlan_name }}
+{% endfor %}

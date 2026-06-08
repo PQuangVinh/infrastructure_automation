@@ -1,0 +1,25 @@
+---
+- name: Triển khai cấu hình Firewall Fortigate
+  hosts: firewalls
+  gather_facts: no
+  tasks:
+    - name: 1. Cấu hình Hostname
+      fortinet.fortios.fortios_system_global:
+        system_global:
+          hostname: "{{ device_hostname }}"
+
+    - name: 2. Cấu hình Interface WAN
+      fortinet.fortios.fortios_system_interface:
+        state: present
+        system_interface:
+          name: "wan1"
+          ip: "{{ wan_ip }} {{ wan_mask }}"
+          allowaccess: "ping https ssh"
+
+    - name: 3. Cấu hình Default Route
+      fortinet.fortios.fortios_router_static:
+        state: present
+        router_static:
+          dst: "0.0.0.0 0.0.0.0"
+          device: "wan1"
+          gateway: "{{ wan_gateway }}"

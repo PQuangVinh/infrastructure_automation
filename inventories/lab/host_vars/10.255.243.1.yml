@@ -1,0 +1,4 @@
+device_hostname: "FW-EDGE-01"
+wan_ip: "1.1.1.2"
+wan_mask: "255.255.255.0"
+wan_gateway: "1.1.1.1"

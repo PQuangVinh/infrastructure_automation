@@ -1,0 +1,4 @@
+---
+device_hostname: "SW-CORE-01"
+sw_host_ip_last_octet: "252"
+vrrp_global_priority: 110

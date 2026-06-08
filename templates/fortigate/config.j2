@@ -1,0 +1,20 @@
+# Config hệ thống cơ bản
+config system global
+    set hostname {{ device_hostname }}
+end
+
+# Cấu hình Interface WAN (định nghĩa trong host_vars)
+config system interface
+    edit "wan1"
+        set ip {{ wan_ip }} {{ wan_mask }}
+        set allowaccess ping https ssh
+    next
+end
+
+# Cấu hình Default Route
+config router static
+    edit 1
+        set device "wan1"
+        set gateway {{ wan_gateway }}
+    next
+end

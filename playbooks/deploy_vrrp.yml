@@ -1,0 +1,7 @@
+---
+- name: Cấu hình VRRP cho Switch
+  hosts: core_switches
+  gather_facts: false
+
+  roles:
+    - vrrp
