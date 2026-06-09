@@ -1,0 +1,127 @@
+! ==========================================================
+! NETBOX SYNC FOR ARUBAOS-SWITCH
+! ==========================================================
+hostname "{{ inventory_hostname }}"
+
+{% if config_context is defined and config_context %}
+{% if config_context.get('timezone') %}
+time timezone {{ config_context.get('timezone') }}
+{% endif %}
+{% if config_context.get('ntp_servers') %}
+timesync sntp
+sntp unicast
+{% for ntp in config_context.get('ntp_servers') %}
+sntp server-priority {{ loop.index }} {{ ntp }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+! ==========================================================
+! VLAN DEFINITIONS FROM NETBOX IPAM
+! ==========================================================
+{% if nb_vlans is defined %}
+{% for item in nb_vlans %}
+{% set vlan = item.value | default(item) %}
+{% set v_id = vlan.get('vid') or vlan.get('vlan_id') or vlan.get('id') %}
+{% if v_id %}
+vlan {{ v_id }}
+   name "{{ vlan.get('name', 'VLAN_' ~ v_id) | replace('"', "'") }}"
+   exit
+{% endif %}
+{% endfor %}
+{% endif %}
+
+! ==========================================================
+! INTERFACE NAMES AND DESCRIPTIONS FROM NETBOX
+! ==========================================================
+{% if nb_interfaces is defined %}
+{% for item in nb_interfaces %}
+{% set intf = item.value | default(item) %}
+{% set intf_name = intf.get('name', intf.get('display')) %}
+{% if intf_name %}
+interface {{ intf_name }}
+{% if intf.get('description') %}
+   name "{{ intf.get('description') | replace('"', "'") }}"
+{% endif %}
+   exit
+{% endif %}
+{% endfor %}
+{% endif %}
+
+! ==========================================================
+! VLAN MEMBERSHIP FROM NETBOX INTERFACE MODE
+! ==========================================================
+{% if nb_interfaces is defined %}
+{% for item in nb_interfaces %}
+{% set intf = item.value | default(item) %}
+{% set intf_name = intf.get('name', intf.get('display')) %}
+{% set mode_obj = intf.get('mode', {}) %}
+{% set mode = mode_obj.get('value', mode_obj) if mode_obj is mapping else mode_obj %}
+{% if intf_name and mode %}
+{% set untagged = intf.get('untagged_vlan') or {} %}
+{% set untagged_ns = namespace(vid=untagged.get('vid') or untagged.get('vlan_id')) %}
+{% if not untagged_ns.vid and untagged.get('id') and nb_vlans is defined %}
+{% for v_item in nb_vlans %}
+{% set v = v_item.value | default(v_item) %}
+{% if v.get('id') == untagged.get('id') %}
+{% set untagged_ns.vid = v.get('vid') or v.get('vlan_id') or v.get('id') %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if mode == 'access' and untagged_ns.vid %}
+vlan {{ untagged_ns.vid }}
+   untagged {{ intf_name }}
+   exit
+{% elif mode in ['tagged', 'tagged-all'] %}
+{% if untagged_ns.vid %}
+vlan {{ untagged_ns.vid }}
+   untagged {{ intf_name }}
+   exit
+{% endif %}
+{% set tagged_vlans = intf.get('tagged_vlans', []) %}
+{% if mode == 'tagged-all' and not tagged_vlans and nb_vlans is defined %}
+{% set tagged_source = nb_vlans %}
+{% else %}
+{% set tagged_source = tagged_vlans %}
+{% endif %}
+{% for tv_item in tagged_source %}
+{% set tv = tv_item.value | default(tv_item) %}
+{% set tagged_ns = namespace(vid=tv.get('vid') or tv.get('vlan_id')) %}
+{% if not tagged_ns.vid and tv.get('id') and nb_vlans is defined %}
+{% for v_item in nb_vlans %}
+{% set v = v_item.value | default(v_item) %}
+{% if v.get('id') == tv.get('id') %}
+{% set tagged_ns.vid = v.get('vid') or v.get('vlan_id') or v.get('id') %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if tagged_ns.vid and (not untagged_ns.vid or (tagged_ns.vid | string) != (untagged_ns.vid | string)) %}
+vlan {{ tagged_ns.vid }}
+   tagged {{ intf_name }}
+   exit
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+! ==========================================================
+! OPTIONAL PORT ROLE POLICY FROM NETBOX CUSTOM FIELD
+! Set aruba_enable_port_role_policy=true to render these commands.
+! ==========================================================
+{% if aruba_enable_port_role_policy | default(false) and nb_interfaces is defined %}
+{% for item in nb_interfaces %}
+{% set intf = item.value | default(item) %}
+{% set intf_name = intf.get('name', intf.get('display')) %}
+{% set port_role = (intf.get('cf_port_role') or intf.get('custom_fields', {}).get('port_role') | default('')) | upper %}
+{% if intf_name and port_role %}
+{% if port_role in ['USER', 'CAMERA', 'AP', 'VOICE'] %}
+spanning-tree {{ intf_name }} admin-edge-port
+spanning-tree {{ intf_name }} bpdu-protection
+{% elif port_role == 'UPLINK' %}
+dhcp-snooping trust {{ intf_name }}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}

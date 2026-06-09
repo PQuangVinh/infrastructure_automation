@@ -6,8 +6,51 @@
     # Cấu hình API kết nối đến NetBox của bạn
     netbox_url: "http://localhost:8000"
     netbox_token: "nbt_U50yW0FdkGaq.Jw5AEEphCT94JwvvHfdOIdGOGYcn8dWanuNnQWNw"
+    cisco_network_os_values:
+      - ios
+      - cisco.ios.ios
+    aruba_network_os_values:
+      - aruba
+      - community.network.aruba
+      - arubaoss
+      - aruba-os-switch
+      - arubaos-switch
+      - aos-switch
+    aruba_aoscx_network_os_values:
+      - aoscx
+      - aruba-cx
+      - arubacx
+      - arubaos-cx
+      - arubanetworks.aoscx.aoscx
 
   tasks:
+    - name: 0.1. Xác định network OS của thiết bị
+      set_fact:
+        nb_sync_network_os: "{{ ansible_network_os | default('cisco.ios.ios') | string | lower }}"
+
+    - name: 0.2. Chọn template và platform deploy phù hợp
+      set_fact:
+        nb_sync_platform: "{{ 'cisco' if nb_sync_network_os in cisco_network_os_values else 'aruba_aoscx' if nb_sync_network_os in aruba_aoscx_network_os_values else 'aruba_os_switch' if nb_sync_network_os in aruba_network_os_values else 'unsupported' }}"
+        nb_sync_template: "{{ 'ios/netbox_sync.j2' if nb_sync_network_os in cisco_network_os_values else 'aoscx/netbox_sync.j2' if nb_sync_network_os in aruba_aoscx_network_os_values else 'aruba/netbox_sync.j2' if nb_sync_network_os in aruba_network_os_values else '' }}"
+        nb_sync_config_path: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_netbox_sync.cfg"
+
+    - name: 0.3. Dừng nếu thiết bị chưa được hỗ trợ
+      assert:
+        that:
+          - nb_sync_platform != 'unsupported'
+        fail_msg: >-
+          Chưa hỗ trợ ansible_network_os={{ ansible_network_os | default('undefined') }}
+          cho {{ inventory_hostname }}. Hiện hỗ trợ Cisco IOS, ArubaOS-Switch và Aruba AOS-CX.
+
+    - name: 0.4. Dừng nếu inventory đang trỏ nhầm về chính máy automation
+      assert:
+        that:
+          - ansible_host | default('') not in lookup('pipe', 'hostname -I').split()
+        fail_msg: >-
+          {{ inventory_hostname }} đang có ansible_host={{ ansible_host | default('undefined') }},
+          trùng IP của máy automation. Hãy sửa primary management IP trong NetBox trước khi deploy.
+      delegate_to: localhost
+
     # ---------------------------------------------------------
     # BƯỚC 1: KÉO DỮ LIỆU TỪ NETBOX QUA API (Sử dụng nb_lookup)
     # ---------------------------------------------------------
@@ -26,8 +69,8 @@
     # ---------------------------------------------------------
     - name: 2. Render cấu hình CLI hoàn chỉnh lưu vào thư mục generated_configs
       template:
-        src: "{{ playbook_dir }}/../templates/ios/netbox_sync.j2"
-        dest: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_netbox_sync.cfg"
+        src: "{{ playbook_dir }}/../templates/{{ nb_sync_template }}"
+        dest: "{{ nb_sync_config_path }}"
       delegate_to: localhost
 
     # ---------------------------------------------------------
@@ -35,8 +78,29 @@
     # ---------------------------------------------------------
     - name: 3. Đẩy cấu hình từ file đã render xuống Switch Cisco
       cisco.ios.ios_config:
-        src: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_netbox_sync.cfg"
+        src: "{{ nb_sync_config_path }}"
         backup: yes
         backup_options:
           filename: "{{ inventory_hostname }}_pre_netbox.bak"
           dir_path: "{{ playbook_dir }}/../backups"
+      when: nb_sync_platform == 'cisco'
+
+    - name: 3. Đẩy cấu hình từ file đã render xuống Switch ArubaOS-Switch
+      community.network.aruba_config:
+        src: "{{ nb_sync_config_path }}"
+        backup: yes
+        backup_options:
+          filename: "{{ inventory_hostname }}_pre_netbox.bak"
+          dir_path: "{{ playbook_dir }}/../backups"
+      when: nb_sync_platform == 'aruba_os_switch'
+
+    - name: 3. Đẩy cấu hình từ file đã render xuống Switch Aruba AOS-CX
+      arubanetworks.aoscx.aoscx_config:
+        src: "{{ nb_sync_config_path }}"
+        backup: yes
+        backup_options:
+          filename: "{{ inventory_hostname }}_pre_netbox.bak"
+          dir_path: "{{ playbook_dir }}/../backups"
+      vars:
+        ansible_become: no
+      when: nb_sync_platform == 'aruba_aoscx'

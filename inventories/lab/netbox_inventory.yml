@@ -9,6 +9,11 @@ group_by:
 compose:
   # Cắt bỏ phần Subnet Mask (/24), chỉ lấy đúng chuỗi IP để SSH
   ansible_host: primary_ip4.address.split('/')[0] if primary_ip4 is defined else name
-  ansible_network_os: "'ios'"
+  # NetBox:
+  # - Device Type/Platform slug aruba-cx/aoscx -> Aruba AOS-CX
+  # - Platform slug arubaos-switch/aos-switch -> ArubaOS-Switch
+  # - Còn lại mặc định Cisco IOS cho lab hiện tại.
+  ansible_network_os: "'arubanetworks.aoscx.aoscx' if ((platform is defined and platform and (platform.slug | default(platform.name | default('')) | lower) in ['aoscx', 'aruba-cx', 'arubacx', 'arubaos-cx']) or (device_type is defined and (device_type.slug | default(device_type.model | default('')) | lower) in ['aoscx', 'aruba-cx', 'arubacx', 'arubaos-cx'])) else 'community.network.aruba' if ((platform is defined and platform and (platform.slug | default(platform.name | default('')) | lower) in ['aruba', 'arubaos-switch', 'aruba-os-switch', 'aos-switch', 'arubaoss']) or (device_type is defined and device_type.manufacturer is defined and (device_type.manufacturer.slug | default(device_type.manufacturer.name | default('')) | lower) in ['aruba', 'hpe', 'hp'])) else 'cisco.ios.ios'"
+  ansible_network_cli_ssh_type: "'paramiko' if ((platform is defined and platform and (platform.slug | default(platform.name | default('')) | lower) in ['aoscx', 'aruba-cx', 'arubacx', 'arubaos-cx']) or (device_type is defined and (device_type.slug | default(device_type.model | default('')) | lower) in ['aoscx', 'aruba-cx', 'arubacx', 'arubaos-cx'])) else 'auto'"
   ansible_user: "'admin'"
   ansible_password: "'cisco'"

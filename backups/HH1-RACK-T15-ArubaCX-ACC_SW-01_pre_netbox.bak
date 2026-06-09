@@ -1,0 +1,120 @@
+Current configuration:
+!
+!Version ArubaOS-CX Virtual.10.07.0004
+!export-password: default
+user admin group administrators password ciphertext AQBapUrTFX8tSWTK5WdjHvcp4xBUVZOfhj90PO++76gXUcOMYgAAAFol40tJUaM7+F2bXazRaBpHJo/YPBq5ZcNgVa982llLxOPstcLskL113gw9c+kd3Nx0wm9eorn0zKIDr5IOsQX8z5tVylAHgRriONaKvPmBmnIEuo0ZgaHDphumZrS9GhpH
+led locator on
+ntp server pool.ntp.org minpoll 4 maxpoll 4 iburst
+ntp enable
+cli-session
+    timeout 10
+!
+!
+!
+!
+!
+!
+ssh server vrf default
+ssh server vrf mgmt
+vlan 1
+vlan 10
+    name MGMT
+vlan 20
+    name CAMERAS
+vlan 30
+    name WiFi
+interface mgmt
+    no shutdown
+    ip dhcp
+interface 1/1/1
+    no shutdown
+    description Uplink to Distribution/Core Switch
+    no routing
+    vlan trunk native 1
+    vlan trunk allowed 1,10,20
+interface 1/1/2
+    no shutdown
+    description Uplink to Distribution/Core Switch
+    no routing
+    vlan trunk native 1
+    vlan trunk allowed 1,10,20
+interface 1/1/3
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/4
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/5
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/6
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/7
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/8
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/9
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/10
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/11
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/12
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/13
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/14
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/15
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface 1/1/16
+    no shutdown
+    description CCTV Camera
+    no routing
+    vlan access 20
+interface vlan 1
+    ip address 192.168.80.87/24
+ip route 0.0.0.0/0 192.168.80.254
+ip dns domain-name local.lab
+!
+!
+!
+!
+!
+https-server vrf mgmt
