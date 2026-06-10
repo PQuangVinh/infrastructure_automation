@@ -1,0 +1,14 @@
+---
+- name: Deploy monitoring baseline from NetBox data
+  hosts: device_roles_core_sw:device_roles_acc_sw
+  gather_facts: false
+
+  pre_tasks:
+    - name: Dừng nếu thiếu SNMP community khi dùng SNMPv2c
+      ansible.builtin.assert:
+        that:
+          - monitoring_snmp_version != 'v2c' or (monitoring_snmp_community | default('') | length > 0)
+        fail_msg: "Thiếu SNMP_COMMUNITY. Hãy export SNMP_COMMUNITY hoặc đổi monitoring_snmp_version sang v3."
+
+  roles:
+    - monitoring_baseline

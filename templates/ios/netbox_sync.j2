@@ -1,150 +1,177 @@
 ! ==========================================================
-! 1. CẤU HÌNH BASELINE
+! NETBOX SYNC FOR CISCO IOS
 ! ==========================================================
 hostname {{ inventory_hostname }}
 
-{% if config_context is defined and config_context %}
-{% if config_context.get('timezone') %}
-clock timezone {{ config_context.get('timezone') }}
+{% set ctx_raw = config_context | default({}) %}
+{% if ctx_raw is mapping %}
+{% set ctx = ctx_raw %}
+{% elif ctx_raw is sequence and (ctx_raw | length) > 0 and (ctx_raw | first) is mapping %}
+{% set ctx = ctx_raw | first %}
+{% else %}
+{% set ctx = {} %}
 {% endif %}
-{% if config_context.get('ntp_servers') %}
-{% for ntp in config_context.get('ntp_servers') %}
+{% if ctx.get('timezone') %}
+{% set ios_timezone_map = {
+  'Asia/Ho_Chi_Minh': 'ICT 7 0',
+  'Asia/Saigon': 'ICT 7 0',
+  'Asia/Bangkok': 'ICT 7 0',
+  'Asia/Jakarta': 'WIB 7 0',
+  'Asia/Singapore': 'SGT 8 0',
+  'Etc/UTC': 'UTC 0 0',
+  'UTC': 'UTC 0 0'
+} %}
+{% set timezone_raw = ctx.get('timezone') | string %}
+{% set ios_timezone = ios_timezone_map.get(timezone_raw, timezone_raw) %}
+{% if '/' not in ios_timezone %}
+clock timezone {{ ios_timezone }}
+{% endif %}
+{% endif %}
+{% if ctx.get('ntp_servers') %}
+{% for ntp in ctx.get('ntp_servers') %}
 ntp server {{ ntp }}
 {% endfor %}
 {% endif %}
+{% set zabbix_server = zabbix_api_host | default('') | string | trim %}
+{% set snmp_community_value = snmp_community | default('') | string | trim %}
+{% set syslog_raw = ctx.get('syslog_servers') | default([]) %}
+{% set syslog_servers = syslog_raw if syslog_raw is sequence and syslog_raw is not string else [] %}
+{% if zabbix_server %}
+{% set syslog_servers = (syslog_servers + [zabbix_server]) | unique | list %}
 {% endif %}
+{% set site_name = sites[0].name if sites is defined and sites is sequence and (sites | length) > 0 and sites[0] is mapping else (sites[0] if sites is defined and sites is sequence and (sites | length) > 0 else 'Unknown') %}
+{% set rack_name = racks[0] if racks is defined and racks is sequence and (racks | length) > 0 else '' %}
+{% set location_text = site_name ~ (' / ' ~ rack_name if rack_name else '') %}
+{% set snmp_acl_suffix = ' SNMP-MONITORING' if zabbix_server else '' %}
 
 ! ==========================================================
-! 2. CẤU HÌNH VLAN (LẤY TỪ IPAM NETBOX)
+! MONITORING BASELINE FOR ZABBIX
 ! ==========================================================
+service timestamps log datetime msec localtime show-timezone
+service timestamps debug datetime msec localtime show-timezone
+{% for syslog_server in syslog_servers %}
+logging host {{ syslog_server }}
+{% endfor %}
+{% if syslog_servers | length > 0 %}
+logging trap informational
+logging source-interface Vlan1
+{% endif %}
+lldp run
+{% if zabbix_server %}
+ip access-list standard SNMP-MONITORING
+ permit {{ zabbix_server }}
+ deny any log
+{% endif %}
+{% if snmp_community_value and zabbix_server %}
+snmp-server community {{ snmp_community_value }} RO{{ snmp_acl_suffix }}
+snmp-server host {{ zabbix_server }} version 2c {{ snmp_community_value }}
+{% elif snmp_community_value %}
+snmp-server community {{ snmp_community_value }} RO
+{% endif %}
+snmp-server contact network-ops
+snmp-server location {{ location_text }}
+snmp-server enable traps
+
+! ==========================================================
+! VLAN DEFINITIONS FROM NETBOX IPAM
+! ==========================================================
+{% set vlan_id_map = {} %}
 {% if nb_vlans is defined %}
 {% for item in nb_vlans %}
-  ! Bóc tách lớp vỏ 'value' do Ansible plugin bọc vào
-  {% set vlan = item.value | default(item) %}
-  {% set v_id = vlan.get('vid') or vlan.get('vlan_id') or vlan.get('id') %}
-  
-  ! Xử lý ngoại lệ: Không tạo và không đổi tên VLAN 1 để tránh lỗi hệ thống Cisco
-  {% if v_id and (v_id | string) != '1' %}
+{% set vlan = item.value | default(item) if item is mapping else item %}
+{% if vlan is mapping %}
+{% set v_id = vlan.get('vid') or vlan.get('vlan_id') or vlan.get('id') %}
+{% if vlan.get('id') and v_id %}
+{% set _ = vlan_id_map.update({(vlan.get('id') | string): (v_id | string)}) %}
+{% endif %}
+{% if v_id and (v_id | string) != '1' %}
 vlan {{ v_id }}
  name {{ vlan.get('name', 'VLAN_' ~ v_id) }}
-  {% endif %}
+{% endif %}
+{% endif %}
 {% endfor %}
 {% endif %}
 
 ! ==========================================================
-! 3. CẤU HÌNH INTERFACE & PORT ROLE (LẤY TỪ DEVICES NETBOX)
+! INTERFACES FROM NETBOX
 ! ==========================================================
 {% if nb_interfaces is defined %}
 {% for item in nb_interfaces %}
-  ! Bóc tách lớp vỏ 'value' do Ansible plugin bọc vào
-  {% set intf = item.value | default(item) %}
-  {% set intf_name = intf.get('name', intf.get('display')) %}
-  
-  {% if intf_name %}
+{% set intf = item.value | default(item) if item is mapping else item %}
+{% if intf is mapping %}
+{% set intf_name = intf.get('name', intf.get('display')) %}
+{% set mode_obj = intf.get('mode') %}
+{% set mode_value = mode_obj.get('value', mode_obj) if mode_obj is mapping else mode_obj %}
+{% set custom_fields = intf.get('custom_fields') if intf.get('custom_fields') is mapping else {} %}
+{% set port_role = (intf.get('cf_port_role') or custom_fields.get('port_role') | default('')) | upper %}
+{% if intf_name %}
 interface {{ intf_name }}
-  {% if intf.get('description') %}
- description {{ intf.get('description') }}
-  {% endif %}
-
-  {% set mode = intf.get('mode', {}) %}
-  {% if mode %}
-   ! --- Cấu hình cổng Access ---
-   {% if mode.get('value', mode) == 'access' %}
+{% if intf.get('description') %}
+ description {{ intf.get('description') | replace('"', "'") }}
+{% endif %}
+{% if mode_value == 'access' %}
  switchport mode access
-    {% set untagged = intf.get('untagged_vlan', {}) %}
-    {% if untagged %}
-     {% for v_item in nb_vlans %}
-      {% set v = v_item.value | default(v_item) %}
-      {% if v.get('id') == untagged.get('id') %}
-       {% set v_id = v.get('vid') or v.get('vlan_id') or v.get('id') %}
-       {% if v_id %}
- switchport access vlan {{ v_id }}
-       {% endif %}
-      {% endif %}
-     {% endfor %}
-    {% endif %}
+{% set untagged = intf.get('untagged_vlan') if intf.get('untagged_vlan') is mapping else {} %}
+{% set untagged_vid = untagged.get('vid') or untagged.get('vlan_id') or vlan_id_map.get(untagged.get('id') | string) %}
+{% if untagged_vid %}
+ switchport access vlan {{ untagged_vid }}
+{% endif %}
  switchport nonegotiate
  spanning-tree portfast edge
-
-   ! --- Cấu hình cổng Trunk (Tagged & Tagged-All) ---
-   {% elif mode.get('value', mode) in ['tagged', 'tagged-all'] %}
+{% elif mode_value in ['tagged', 'tagged-all'] %}
  switchport trunk encapsulation dot1q
  switchport mode trunk
-    {% set untagged = intf.get('untagged_vlan', {}) %}
-    {% if untagged %}
-     {% for v_item in nb_vlans %}
-      {% set v = v_item.value | default(v_item) %}
-      {% if v.get('id') == untagged.get('id') %}
-       {% set v_id = v.get('vid') or v.get('vlan_id') or v.get('id') %}
-       {% if v_id %}
- switchport trunk native vlan {{ v_id }}
-       {% endif %}
-      {% endif %}
-     {% endfor %}
-    {% endif %}
-    
-    {% set tagged_vlans = intf.get('tagged_vlans', []) %}
-    {% if tagged_vlans %}
-     {% set tag_vids = [] %}
-     {% for tv in tagged_vlans %}
-      {% for v_item in nb_vlans %}
-       {% set v = v_item.value | default(v_item) %}
-       {% if v.get('id') == tv.get('id') %}
-        {% set v_id = v.get('vid') or v.get('vlan_id') or v.get('id') %}
-        {% if v_id %}
-         {% set _ = tag_vids.append(v_id | string) %}
-        {% endif %}
-       {% endif %}
-      {% endfor %}
-     {% endfor %}
-     {% if tag_vids | length > 0 %}
- switchport trunk allowed vlan {{ tag_vids | join(',') }}
-     {% endif %}
-    {% endif %}
-   {% endif %}
-  {% endif %}
-
-  ! --------------------------------------------------------
-  ! EXTRA LOGIC: CẤU HÌNH THEO TRƯỜNG CUSTOM FIELD CF_PORT_ROLE
-  ! --------------------------------------------------------
-  {% set port_role = (intf.get('cf_port_role') or intf.get('custom_fields', {}).get('port_role') | default('')) | upper %}
-  {% if port_role %}
-  ! -> Áp dụng chính sách bảo mật cho nhóm: {{ port_role }}
-  {% if port_role == 'USER' %}
-   spanning-tree bpduguard enable
-   ip dhcp snooping limit rate 20
-   storm-control broadcast level 1.0
-
-  {% elif port_role == 'CAMERA' %}
-   spanning-tree bpduguard enable
-   ip dhcp snooping limit rate 10
-   switchport port-security
-   switchport port-security maximum 1
-   switchport port-security violation shutdown
-
-  {% elif port_role == 'AP' %}
-   spanning-tree bpduguard enable
-   power inline auto
-   {% if mode.get('value', mode) in ['tagged', 'tagged-all'] %}
-   spanning-tree portfast edge trunk
-   {% endif %}
-
-  {% elif port_role == 'UPLINK' %}
-   ip dhcp snooping trust
-   spanning-tree link-type point-to-point
-
-  {% elif port_role == 'SERVER' %}
-   ip dhcp snooping limit rate 100
-
-  {% elif port_role == 'VOICE' %}
-   spanning-tree bpduguard enable
-   ip dhcp snooping limit rate 20
-   ! switchport voice vlan [Nếu quy hoạch riêng SVI thoại]
-  {% endif %}
-  {% endif %}
-  
-   no shutdown
+{% set untagged = intf.get('untagged_vlan') if intf.get('untagged_vlan') is mapping else {} %}
+{% set native_vid = untagged.get('vid') or untagged.get('vlan_id') or vlan_id_map.get(untagged.get('id') | string) %}
+{% if native_vid %}
+ switchport trunk native vlan {{ native_vid }}
+{% endif %}
+{% set tagged_vlans_raw = intf.get('tagged_vlans') %}
+{% set tagged_source = tagged_vlans_raw if tagged_vlans_raw is sequence and tagged_vlans_raw is not string else [] %}
+{% set tagged_vids = [] %}
+{% for tv_item in tagged_source %}
+{% set tv = tv_item.value | default(tv_item) if tv_item is mapping else tv_item %}
+{% if tv is mapping %}
+{% set tagged_vid = tv.get('vid') or tv.get('vlan_id') or vlan_id_map.get(tv.get('id') | string) %}
+{% if tagged_vid %}
+{% set _ = tagged_vids.append(tagged_vid | string) %}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% if tagged_vids | length > 0 %}
+ switchport trunk allowed vlan {{ tagged_vids | unique | join(',') }}
+{% endif %}
+{% endif %}
+{% if port_role %}
+{% if port_role == 'USER' %}
+ spanning-tree bpduguard enable
+ ip dhcp snooping limit rate 20
+ storm-control broadcast level 1.0
+{% elif port_role == 'CAMERA' %}
+ spanning-tree bpduguard enable
+ ip dhcp snooping limit rate 10
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+{% elif port_role == 'AP' %}
+ spanning-tree bpduguard enable
+ power inline auto
+{% if mode_value in ['tagged', 'tagged-all'] %}
+ spanning-tree portfast edge trunk
+{% endif %}
+{% elif port_role == 'UPLINK' %}
+ ip dhcp snooping trust
+ spanning-tree link-type point-to-point
+{% elif port_role == 'SERVER' %}
+ ip dhcp snooping limit rate 100
+{% elif port_role == 'VOICE' %}
+ spanning-tree bpduguard enable
+ ip dhcp snooping limit rate 20
+{% endif %}
+{% endif %}
+ no shutdown
 !
-  {% endif %}
+{% endif %}
+{% endif %}
 {% endfor %}
 {% endif %}

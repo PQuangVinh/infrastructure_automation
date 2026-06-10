@@ -6,11 +6,43 @@ ansible_network_os: cisco.ios.ios
 
 
 # Thông tin đăng nhập
-ansible_user: "admin"
-ansible_password: "cisco"
+env_file: /home/vinh/Desktop/infrastructure_automation/scripts/.env
+ansible_user: "{{ lookup('ansible.builtin.ini', 'ANSIBLE_NET_USER type=properties file=' ~ env_file) | default(lookup('env', 'ANSIBLE_NET_USER'), true) | default('admin', true) }}"
+ansible_password: "{{ lookup('ansible.builtin.ini', 'ANSIBLE_NET_PASSWORD type=properties file=' ~ env_file) | default(lookup('env', 'ANSIBLE_NET_PASSWORD'), true) }}"
+ansible_ssh_pass: "{{ ansible_password }}"
+ansible_ssh_password: "{{ ansible_password }}"
+ansible_paramiko_pass: "{{ ansible_password }}"
+ansible_paramiko_password: "{{ ansible_password }}"
 ansible_become: yes
 ansible_become_method: enable
-ansible_become_password: "cisco"
+ansible_become_password: "{{ lookup('ansible.builtin.ini', 'ANSIBLE_NET_ENABLE_PASSWORD type=properties file=' ~ env_file) | default(lookup('env', 'ANSIBLE_NET_ENABLE_PASSWORD'), true) | default(ansible_password, true) }}"
 
 ansible_command_timeout: 180
 ansible_connect_timeout: 180
+ansible_network_cli_ssh_type: libssh
+ansible_host_key_checking: false
+ansible_ssh_common_args: >-
+  -o StrictHostKeyChecking=no
+  -o UserKnownHostsFile=/dev/null
+  -o PubkeyAuthentication=no
+  -o PreferredAuthentications=password,keyboard-interactive
+ansible_paramiko_look_for_keys: false
+ansible_paramiko_host_key_auto_add: true
+ansible_paramiko_record_host_keys: false
+ansible_private_key_file: ""
+ansible_ssh_private_key_file: ""
+ansible_paramiko_private_key_file: ""
+
+netbox_url: "{{ lookup('ansible.builtin.ini', 'NETBOX_URL type=properties file=' ~ env_file) | default(lookup('ansible.builtin.ini', 'NETBOX_API type=properties file=' ~ env_file), true) | default(lookup('env', 'NETBOX_URL'), true) | default(lookup('env', 'NETBOX_API'), true) | default('http://192.168.80.20:8000', true) }}"
+netbox_token: "{{ (lookup('ansible.builtin.ini', 'NETBOX_TOKEN type=properties file=' ~ env_file) | default(lookup('ansible.builtin.ini', 'NETBOX_API_TOKEN type=properties file=' ~ env_file), true) | default(lookup('env', 'NETBOX_TOKEN'), true) | default(lookup('env', 'NETBOX_API_TOKEN'), true)) | trim | regex_replace('(?i)^(bearer|token)\\s+', '') | trim }}"
+netbox_validate_certs: "{{ lookup('ansible.builtin.ini', 'NETBOX_VALIDATE_CERTS type=properties file=' ~ env_file) | default(lookup('env', 'NETBOX_VALIDATE_CERTS'), true) | default('false', true) | bool }}"
+
+zabbix_api_host: "{{ lookup('env', 'ZABBIX_API_HOST') | default(lookup('ansible.builtin.ini', 'ZABBIX_API_HOST type=properties file=' ~ env_file), true) | default('192.168.80.20', true) }}"
+zabbix_api_user: "{{ lookup('env', 'ZABBIX_USER') | default(lookup('ansible.builtin.ini', 'ZABBIX_USER type=properties file=' ~ env_file), true) | default('Admin', true) }}"
+zabbix_api_password: "{{ lookup('env', 'ZABBIX_PASSWORD') | default(lookup('ansible.builtin.ini', 'ZABBIX_PASSWORD type=properties file=' ~ env_file), true) }}"
+zabbix_api_port: "{{ lookup('env', 'ZABBIX_API_PORT') | default(lookup('ansible.builtin.ini', 'ZABBIX_API_PORT type=properties file=' ~ env_file), true) | default('8080', true) | int }}"
+zabbix_api_use_ssl: "{{ lookup('env', 'ZABBIX_API_USE_SSL') | default(lookup('ansible.builtin.ini', 'ZABBIX_API_USE_SSL type=properties file=' ~ env_file), true) | default('false', true) | bool }}"
+zabbix_url_path: "{{ lookup('env', 'ZABBIX_URL_PATH') | default(lookup('ansible.builtin.ini', 'ZABBIX_URL_PATH type=properties file=' ~ env_file), true) | default('', true) }}"
+zabbix_validate_certs: "{{ lookup('env', 'ZABBIX_VALIDATE_CERTS') | default(lookup('ansible.builtin.ini', 'ZABBIX_VALIDATE_CERTS type=properties file=' ~ env_file), true) | default('false', true) | bool }}"
+
+snmp_community: "{{ lookup('env', 'SNMP_COMMUNITY') | default(lookup('ansible.builtin.ini', 'SNMP_COMMUNITY type=properties file=' ~ env_file), true) }}"

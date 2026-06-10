@@ -1,0 +1,25 @@
+---
+- name: Configure Zabbix monitoring policy for NetBox-managed hosts
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    project_root: "{{ playbook_dir }}/.."
+    zabbix_policy_script: "{{ project_root }}/scripts/configure_zabbix_monitoring_policy.py"
+    zabbix_policy_output: "{{ project_root }}/outputs/zabbix_monitoring_policy.json"
+    zabbix_policy_dry_run: false
+
+  tasks:
+    - name: Apply Zabbix monitoring policy
+      ansible.builtin.command:
+        cmd: >-
+          python3 {{ zabbix_policy_script | quote }}
+          --output-json {{ zabbix_policy_output | quote }}
+          {% if zabbix_policy_dry_run | bool %}--dry-run{% endif %}
+      register: zabbix_policy_result
+      changed_when: '"\"changed\": true" in zabbix_policy_result.stdout'
+
+    - name: Show Zabbix monitoring policy result
+      ansible.builtin.debug:
+        msg: "{{ zabbix_policy_result.stdout_lines }}"

@@ -1,5 +1,4 @@
 ---
 device_hostname: "SW-NEW-100"
 ansible_network_os: "ios"
-ansible_user: "admin"
-ansible_password: "1234"
+ansible_user: "{{ lookup('env', 'ANSIBLE_NET_USER') | default('admin', true) }}"

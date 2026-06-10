@@ -3,8 +3,9 @@
   hosts: localhost
   gather_facts: no
   vars:
-    netbox_url: "http://localhost:8000"
-    netbox_token: "nbt_U50yW0FdkGaq.Jw5AEEphCT94JwvvHfdOIdGOGYcn8dWanuNnQWNw"
+    env_file: "{{ playbook_dir }}/../scripts/.env"
+    netbox_url: "{{ lookup('ansible.builtin.ini', 'NETBOX_URL type=properties file=' ~ env_file) | default(lookup('ansible.builtin.ini', 'NETBOX_API type=properties file=' ~ env_file), true) | default(lookup('env', 'NETBOX_URL'), true) | default(lookup('env', 'NETBOX_API'), true) | default('http://192.168.80.20:8000', true) }}"
+    netbox_token: "{{ (lookup('ansible.builtin.ini', 'NETBOX_TOKEN type=properties file=' ~ env_file) | default(lookup('ansible.builtin.ini', 'NETBOX_API_TOKEN type=properties file=' ~ env_file), true) | default(lookup('env', 'NETBOX_TOKEN'), true) | default(lookup('env', 'NETBOX_API_TOKEN'), true)) | trim | regex_replace('(?i)^(bearer|token)\\s+', '') | trim }}"
     csv_dir: "{{ playbook_dir }}/../data"
 
   tasks:

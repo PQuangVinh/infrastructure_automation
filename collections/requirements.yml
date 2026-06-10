@@ -1,4 +1,14 @@
 ---
 collections:
+  - name: cisco.ios
+    version: ">=8.0.0"
+  - name: community.network
+    version: ">=5.1.0"
+  - name: community.zabbix
+    version: ">=2.5.0"
+  - name: netbox.netbox
+    version: ">=3.20.0"
   - name: arubanetworks.aoscx
     version: ">=4.4.0"
+  - name: fortinet.fortios
+    version: ">=2.5.0"

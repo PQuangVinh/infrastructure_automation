@@ -1,0 +1,51 @@
+---
+zabbix_api_host: "{{ lookup('env', 'ZABBIX_API_HOST') | default(lookup('ansible.builtin.ini', 'ZABBIX_API_HOST type=properties file=/home/vinh/Desktop/infrastructure_automation/scripts/.env'), true) | default('192.168.80.20', true) }}"
+zabbix_api_user: "{{ lookup('env', 'ZABBIX_USER') | default(lookup('ansible.builtin.ini', 'ZABBIX_USER type=properties file=/home/vinh/Desktop/infrastructure_automation/scripts/.env'), true) | default('Admin', true) }}"
+zabbix_api_password: "{{ lookup('env', 'ZABBIX_PASSWORD') | default(lookup('ansible.builtin.ini', 'ZABBIX_PASSWORD type=properties file=/home/vinh/Desktop/infrastructure_automation/scripts/.env'), true) }}"
+zabbix_api_port: "{{ lookup('env', 'ZABBIX_API_PORT') | default(lookup('ansible.builtin.ini', 'ZABBIX_API_PORT type=properties file=/home/vinh/Desktop/infrastructure_automation/scripts/.env'), true) | default('8080', true) | int }}"
+zabbix_api_use_ssl: "{{ lookup('env', 'ZABBIX_API_USE_SSL') | default(lookup('ansible.builtin.ini', 'ZABBIX_API_USE_SSL type=properties file=/home/vinh/Desktop/infrastructure_automation/scripts/.env'), true) | default('false', true) | bool }}"
+zabbix_url_path: "{{ lookup('env', 'ZABBIX_URL_PATH') | default(lookup('ansible.builtin.ini', 'ZABBIX_URL_PATH type=properties file=/home/vinh/Desktop/infrastructure_automation/scripts/.env'), true) | default('', true) }}"
+zabbix_validate_certs: "{{ lookup('env', 'ZABBIX_VALIDATE_CERTS') | default(lookup('ansible.builtin.ini', 'ZABBIX_VALIDATE_CERTS type=properties file=/home/vinh/Desktop/infrastructure_automation/scripts/.env'), true) | default('false', true) | bool }}"
+snmp_community: "{{ lookup('env', 'SNMP_COMMUNITY') | default(lookup('ansible.builtin.ini', 'SNMP_COMMUNITY type=properties file=/home/vinh/Desktop/infrastructure_automation/scripts/.env'), true) }}"
+
+zabbix_sync_manage_default: true
+zabbix_sync_host_status: enabled
+zabbix_sync_snmp_port: "161"
+zabbix_sync_snmp_version: 2
+
+zabbix_sync_default_host_groups:
+  - Network Devices
+zabbix_sync_site_group_prefix: Site
+zabbix_sync_role_group_prefix: Network
+
+zabbix_sync_default_templates:
+  - Generic by SNMP
+
+zabbix_sync_template_map:
+  ios:
+    - Cisco IOS by SNMP
+  cisco:
+    - Cisco IOS by SNMP
+  cisco_ios:
+    - Cisco IOS by SNMP
+  aruba:
+    - Aruba CX 8300s by SNMP
+  aoscx:
+    - Aruba CX 8300s by SNMP
+  aruba_cx:
+    - Aruba CX 8300s by SNMP
+  fortinet:
+    - FortiGate by SNMP
+  fortios:
+    - FortiGate by SNMP
+
+zabbix_api_token: "{{ lookup('env', 'ANSIBLE_ZABBIX_AUTH_KEY') | default(lookup('ansible.builtin.ini', 'ANSIBLE_ZABBIX_AUTH_KEY type=properties file=/home/vinh/Desktop/infrastructure_automation/scripts/.env'), true) }}"
+
+zabbix_sync_default_environment: lab
+zabbix_sync_alert_route: telegram
+zabbix_sync_role_criticality_map:
+  core_sw: high
+  acc_sw: average
+  fw: disaster
+  firewall: disaster
+  server: average

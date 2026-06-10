@@ -1,0 +1,308 @@
+---
+- name: Dừng nếu thiếu thông tin đăng nhập Zabbix API
+  ansible.builtin.assert:
+    that:
+      - zabbix_api_host | default('') | length > 0
+      - zabbix_api_token | default('') | length > 0
+    fail_msg: "Thiếu Zabbix API token. Hãy export ANSIBLE_ZABBIX_AUTH_KEY."
+  run_once: true
+
+- name: Chuẩn hóa dữ liệu NetBox cho host Zabbix
+  ansible.builtin.set_fact:
+    nb_custom_fields: "{{ custom_fields | default({}) }}"
+    nb_site_name: "{{ site.name | default(site.display | default(site.slug | default(sites[0].name | default(sites[0].display | default(sites[0].slug | default('Unknown')))))) }}"
+    nb_role_name: "{{ device_role.name | default(device_role.display | default(device_role.slug | default(device_roles[0] | default('Network')))) }}"
+    nb_role_slug: "{{ device_role.slug | default(device_role.name | default(device_roles[0] | default('network'))) | lower | regex_replace('[^a-z0-9]+', '_') }}"
+    nb_platform_slug: "{{ platform.slug | default(platform.name | default(platforms[0] | default(device_types[0] | default('')))) | lower | regex_replace('[^a-z0-9]+', '_') }}"
+    nb_manufacturer_slug: "{{ device_type.manufacturer.slug | default(device_type.manufacturer.name | default(manufacturers[0] | default(''))) | lower | regex_replace('[^a-z0-9]+', '_') }}"
+    nb_rack_name: "{{ rack.name | default(rack.display | default('Unknown')) }}"
+    nb_location_name: "{{ location.name | default(location.display | default('Unknown')) }}"
+    zabbix_host_ip: "{{ ansible_host | default((primary_ip4.address | default('')).split('/')[0]) }}"
+    zabbix_host_from_tag: "{{ (netbox_tags | default(tags | default([])) | to_json | lower) is search('zabbix') }}"
+
+- name: Chuẩn hóa tag vận hành cho alert policy
+  ansible.builtin.set_fact:
+    nb_tags_text: "{{ netbox_tags | default(tags | default([])) | to_json | lower }}"
+    nb_role_class: >-
+      {{
+        'core'
+        if (nb_role_slug is search('core'))
+        else 'access'
+        if (nb_role_slug is search('acc|access'))
+        else 'firewall'
+        if (nb_role_slug is search('fw|firewall'))
+        else 'server'
+        if (nb_role_slug is search('server|srv'))
+        else 'network'
+      }}
+    nb_environment: >-
+      {{
+        (
+          nb_custom_fields.environment
+          | default(nb_custom_fields.env | default('', true), true)
+        )
+        if (
+          nb_custom_fields.environment | default(nb_custom_fields.env | default('', true), true) | string | length > 0
+        )
+        else (
+          'prod'
+          if ((netbox_tags | default(tags | default([])) | to_json | lower) is search('prod'))
+          else 'lab'
+          if ((netbox_tags | default(tags | default([])) | to_json | lower) is search('lab'))
+          else zabbix_sync_default_environment
+        )
+      }}
+
+- name: Xác định host có được đồng bộ sang Zabbix không
+  ansible.builtin.set_fact:
+    zabbix_host_manage: "{{ zabbix_host_from_tag or (nb_custom_fields.monitoring_enabled | default(zabbix_sync_manage_default) | bool) }}"
+
+- name: Chuẩn hóa host group, template và tag Zabbix
+  ansible.builtin.set_fact:
+    zabbix_host_groups_resolved: >-
+      {{
+        (
+          zabbix_sync_default_host_groups
+          + [zabbix_sync_site_group_prefix ~ '/' ~ nb_site_name]
+          + [zabbix_sync_role_group_prefix ~ '/' ~ nb_role_name]
+          + ([nb_custom_fields.zabbix_hostgroup] if (nb_custom_fields.zabbix_hostgroup | default('') | length > 0) else [])
+        ) | unique | list
+      }}
+    zabbix_templates_auto: >-
+      {{
+        zabbix_sync_template_map.get(
+          nb_custom_fields.snmp_profile | default('') | lower | regex_replace('[^a-z0-9]+', '_'),
+          zabbix_sync_template_map.get(
+            nb_platform_slug,
+            zabbix_sync_template_map.get(nb_manufacturer_slug, zabbix_sync_default_templates)
+          )
+        )
+      }}
+    zabbix_template_override: "{{ nb_custom_fields.zabbix_template | default('') }}"
+    zabbix_host_tags_resolved: >-
+      {{
+        [
+          {'tag': 'source', 'value': 'netbox'},
+          {'tag': 'site', 'value': nb_site_name | lower},
+          {'tag': 'role', 'value': nb_role_slug},
+          {'tag': 'role_class', 'value': nb_role_class},
+          {'tag': 'environment', 'value': nb_environment | lower},
+          {'tag': 'alert_route', 'value': zabbix_sync_alert_route},
+          {'tag': 'rack', 'value': nb_rack_name},
+          {'tag': 'platform', 'value': nb_platform_slug | default('unknown', true)},
+          {
+            'tag': 'severity_profile',
+            'value': (
+              nb_custom_fields.criticality
+              | default(zabbix_sync_role_criticality_map.get(nb_role_slug, 'warning'), true)
+              | string
+            )
+          }
+        ]
+        + ([{'tag': 'criticality', 'value': nb_custom_fields.criticality | string}]
+           if (nb_custom_fields.criticality | default('') | string | length > 0) else [])
+      }}
+
+- name: Xác định template Zabbix cuối cùng
+  ansible.builtin.set_fact:
+    zabbix_host_templates_resolved: >-
+      {{
+        zabbix_template_override
+        if (zabbix_template_override is sequence and zabbix_template_override is not string)
+        else ([zabbix_template_override] if (zabbix_template_override | string | length > 0) else zabbix_templates_auto)
+      }}
+    zabbix_api_url: >-
+      {{ 'https' if (zabbix_api_use_ssl | bool) else 'http' }}://{{ zabbix_api_host }}:{{ zabbix_api_port }}{% if zabbix_url_path | length > 0 %}/{{ zabbix_url_path | trim('/') }}{% endif %}/api_jsonrpc.php
+    zabbix_host_status_code: "{{ 0 if zabbix_sync_host_status == 'enabled' else 1 }}"
+
+- name: Dừng nếu thiếu SNMP community cho SNMPv2c
+  ansible.builtin.assert:
+    that:
+      - zabbix_sync_snmp_version != 2 or (snmp_community | default('') | length > 0)
+    fail_msg: "Thiếu SNMP_COMMUNITY để tạo SNMP interface trên Zabbix."
+  when: zabbix_host_manage | bool
+
+- name: Tạo host group trong Zabbix
+  community.zabbix.zabbix_group:
+    host_groups: "{{ zabbix_host_groups_resolved }}"
+    state: present
+  vars:
+    ansible_network_os: community.zabbix.zabbix
+    ansible_connection: httpapi
+    ansible_host: "{{ zabbix_api_host }}"
+    ansible_httpapi_port: "{{ zabbix_api_port }}"
+    ansible_httpapi_use_ssl: "{{ zabbix_api_use_ssl }}"
+    ansible_httpapi_validate_certs: "{{ zabbix_validate_certs }}"
+    ansible_zabbix_url_path: "{{ zabbix_url_path }}"
+    ansible_user: "{{ zabbix_api_user }}"
+    ansible_httpapi_pass: "{{ zabbix_api_password }}"
+    ansible_zabbix_auth_key: "{{ zabbix_api_token }}"
+  when: zabbix_host_manage | bool
+  throttle: 1
+
+- name: Lấy ID host group từ Zabbix
+  ansible.builtin.uri:
+    url: "{{ zabbix_api_url }}"
+    method: POST
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      method: hostgroup.get
+      params:
+        output:
+          - groupid
+          - name
+        filter:
+          name: "{{ zabbix_host_groups_resolved }}"
+      auth: "{{ zabbix_api_token }}"
+      id: 1
+    return_content: true
+    validate_certs: "{{ zabbix_validate_certs }}"
+  register: zabbix_group_get
+  delegate_to: localhost
+  failed_when: zabbix_group_get.json.error is defined
+  when: zabbix_host_manage | bool
+
+- name: Lấy ID template từ Zabbix
+  ansible.builtin.uri:
+    url: "{{ zabbix_api_url }}"
+    method: POST
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      method: template.get
+      params:
+        output:
+          - templateid
+          - host
+        filter:
+          host: "{{ zabbix_host_templates_resolved }}"
+      auth: "{{ zabbix_api_token }}"
+      id: 2
+    return_content: true
+    validate_certs: "{{ zabbix_validate_certs }}"
+  register: zabbix_template_get
+  delegate_to: localhost
+  failed_when: zabbix_template_get.json.error is defined
+  when: zabbix_host_manage | bool
+
+- name: Dừng nếu thiếu group hoặc template trên Zabbix
+  ansible.builtin.assert:
+    that:
+      - (zabbix_group_get.json.result | length) == (zabbix_host_groups_resolved | length)
+      - (zabbix_template_get.json.result | length) == (zabbix_host_templates_resolved | length)
+    fail_msg: >-
+      Thiếu Zabbix group/template cho {{ inventory_hostname }}.
+      Groups cần: {{ zabbix_host_groups_resolved }};
+      groups thấy: {{ zabbix_group_get.json.result | map(attribute='name') | list }};
+      templates cần: {{ zabbix_host_templates_resolved }};
+      templates thấy: {{ zabbix_template_get.json.result | map(attribute='host') | list }}.
+  when: zabbix_host_manage | bool
+
+- name: Lấy host hiện có trên Zabbix
+  ansible.builtin.uri:
+    url: "{{ zabbix_api_url }}"
+    method: POST
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      method: host.get
+      params:
+        output:
+          - hostid
+          - host
+        filter:
+          host:
+            - "{{ inventory_hostname }}"
+      auth: "{{ zabbix_api_token }}"
+      id: 3
+    return_content: true
+    validate_certs: "{{ zabbix_validate_certs }}"
+  register: zabbix_host_get
+  delegate_to: localhost
+  failed_when: zabbix_host_get.json.error is defined
+  when: zabbix_host_manage | bool
+
+- name: Chuẩn bị payload Zabbix host
+  ansible.builtin.set_fact:
+    zabbix_host_group_payload: "{{ zabbix_group_get.json.result | map(attribute='groupid') | map('community.general.dict_kv', 'groupid') | list }}"
+    zabbix_host_template_payload: "{{ zabbix_template_get.json.result | map(attribute='templateid') | map('community.general.dict_kv', 'templateid') | list }}"
+    zabbix_host_inventory_payload:
+      alias: "{{ inventory_hostname }}"
+      tag: "{{ nb_role_name }}"
+      location: "{{ nb_location_name }}"
+      site_rack: "{{ nb_rack_name }}"
+      notes: "Source of truth: NetBox; primary_ip={{ zabbix_host_ip }}; platform={{ nb_platform_slug | default('unknown', true) }}"
+    zabbix_host_interface_payload:
+      - type: 2
+        main: 1
+        useip: 1
+        ip: "{{ zabbix_host_ip }}"
+        dns: ""
+        port: "{{ zabbix_sync_snmp_port }}"
+        details:
+          version: "{{ zabbix_sync_snmp_version }}"
+          community: "{{ snmp_community | default('') }}"
+          bulk: 1
+  when: zabbix_host_manage | bool
+
+- name: Tạo host mới trong Zabbix qua JSON-RPC
+  ansible.builtin.uri:
+    url: "{{ zabbix_api_url }}"
+    method: POST
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      method: host.create
+      params:
+        host: "{{ inventory_hostname }}"
+        name: "{{ inventory_hostname }}"
+        description: "Managed from NetBox. Site={{ nb_site_name }}, Role={{ nb_role_name }}, Rack={{ nb_rack_name }}."
+        status: "{{ zabbix_host_status_code }}"
+        groups: "{{ zabbix_host_group_payload }}"
+        templates: "{{ zabbix_host_template_payload }}"
+        interfaces: "{{ zabbix_host_interface_payload }}"
+        tags: "{{ zabbix_host_tags_resolved }}"
+        inventory_mode: 0
+        inventory: "{{ zabbix_host_inventory_payload }}"
+      auth: "{{ zabbix_api_token }}"
+      id: 4
+    return_content: true
+    validate_certs: "{{ zabbix_validate_certs }}"
+  register: zabbix_host_create
+  delegate_to: localhost
+  failed_when: zabbix_host_create.json.error is defined
+  changed_when: true
+  when:
+    - zabbix_host_manage | bool
+    - zabbix_host_get.json.result | length == 0
+
+- name: Cập nhật host đã có trong Zabbix qua JSON-RPC
+  ansible.builtin.uri:
+    url: "{{ zabbix_api_url }}"
+    method: POST
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      method: host.update
+      params:
+        hostid: "{{ zabbix_host_get.json.result[0].hostid }}"
+        name: "{{ inventory_hostname }}"
+        description: "Managed from NetBox. Site={{ nb_site_name }}, Role={{ nb_role_name }}, Rack={{ nb_rack_name }}."
+        status: "{{ zabbix_host_status_code }}"
+        groups: "{{ zabbix_host_group_payload }}"
+        templates: "{{ zabbix_host_template_payload }}"
+        tags: "{{ zabbix_host_tags_resolved }}"
+        inventory_mode: 0
+        inventory: "{{ zabbix_host_inventory_payload }}"
+      auth: "{{ zabbix_api_token }}"
+      id: 5
+    return_content: true
+    validate_certs: "{{ zabbix_validate_certs }}"
+  register: zabbix_host_update
+  delegate_to: localhost
+  failed_when: zabbix_host_update.json.error is defined
+  changed_when: true
+  when:
+    - zabbix_host_manage | bool
+    - zabbix_host_get.json.result | length > 0

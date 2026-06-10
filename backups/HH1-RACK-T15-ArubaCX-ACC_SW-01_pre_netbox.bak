@@ -4,6 +4,8 @@ Current configuration:
 !export-password: default
 user admin group administrators password ciphertext AQBapUrTFX8tSWTK5WdjHvcp4xBUVZOfhj90PO++76gXUcOMYgAAAFol40tJUaM7+F2bXazRaBpHJo/YPBq5ZcNgVa982llLxOPstcLskL113gw9c+kd3Nx0wm9eorn0zKIDr5IOsQX8z5tVylAHgRriONaKvPmBmnIEuo0ZgaHDphumZrS9GhpH
 led locator on
+ntp server 1.1.1.1
+ntp server 8.8.8.8
 ntp server pool.ntp.org minpoll 4 maxpoll 4 iburst
 ntp enable
 cli-session

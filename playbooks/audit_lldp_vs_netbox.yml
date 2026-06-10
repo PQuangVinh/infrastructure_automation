@@ -1,0 +1,56 @@
+---
+- name: Audit LLDP/CDP reality before comparing with NetBox cables
+  hosts: all_switches
+  gather_facts: false
+  vars:
+    audit_output_dir: "{{ playbook_dir }}/../generated_reports/lldp_audit"
+
+  tasks:
+    - name: Tạo thư mục báo cáo audit
+      ansible.builtin.file:
+        path: "{{ audit_output_dir }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Xác định nền tảng thiết bị
+      ansible.builtin.set_fact:
+        audit_network_os: "{{ ansible_network_os | default('cisco.ios.ios') | string | lower }}"
+
+    - name: Thu thập LLDP/CDP neighbor trên Cisco IOS
+      cisco.ios.ios_command:
+        commands:
+          - show lldp neighbors detail
+          - show cdp neighbors detail
+      register: audit_neighbor_output
+      failed_when: false
+      when: audit_network_os in ['ios', 'cisco.ios.ios']
+
+    - name: Lưu báo cáo neighbor thực tế
+      ansible.builtin.copy:
+        dest: "{{ audit_output_dir }}/{{ inventory_hostname }}_neighbors.txt"
+        mode: "0644"
+        content: |
+          Device: {{ inventory_hostname }}
+          ansible_host: {{ ansible_host | default('unknown') }}
+          ansible_network_os: {{ ansible_network_os | default('unknown') }}
+
+          {% if audit_neighbor_output.stdout is defined %}
+          {% for command_output in audit_neighbor_output.stdout %}
+          ============================================================
+          {{ audit_neighbor_output.invocation.module_args.commands[loop.index0] }}
+          ============================================================
+          {{ command_output }}
+
+          {% endfor %}
+          {% else %}
+          Neighbor collection skipped because this platform is not supported yet.
+          {% endif %}
+      delegate_to: localhost
+
+    - name: Gợi ý bước so sánh NetBox Cable
+      ansible.builtin.debug:
+        msg: >-
+          Đã lưu neighbor report cho {{ inventory_hostname }}.
+          Bước tiếp theo là đối chiếu report này với outputs/topology_*.json từ NetBox Cable.

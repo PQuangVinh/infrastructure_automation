@@ -3,3 +3,6 @@ pandas>=2.0.0
 openpyxl>=3.1.0
 pynetbox>=7.0.0
 python-dotenv>=1.0.0
+pydotplus>=2.0.2
+webcolors>=1.13
+Pillow>=10.0.0

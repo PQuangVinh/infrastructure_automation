@@ -1,0 +1,42 @@
+---
+- name: Dừng nếu thiếu NetBox credential để render topology
+  ansible.builtin.assert:
+    that:
+      - netbox_url | default('') | length > 0
+      - netbox_token | default('') | length > 0
+    fail_msg: "Thiếu NETBOX_URL hoặc NETBOX_TOKEN để đọc Cable từ NetBox."
+
+- name: Tạo thư mục outputs nếu chưa có
+  ansible.builtin.file:
+    path: "{{ topology_output_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Chuẩn bị lệnh render topology
+  ansible.builtin.set_fact:
+    topology_render_command: >-
+      {{
+        [
+          'python3',
+          topology_script,
+          '--url',
+          netbox_url,
+          '--output-dir',
+          topology_output_dir
+        ]
+        + (['--site', topology_site] if (topology_site | default('') | length > 0) else [])
+        + (['--insecure'] if not (topology_validate_certs | bool) else [])
+      }}
+
+- name: Render Mermaid, DOT, JSON và SVG từ NetBox Cable
+  ansible.builtin.command:
+    argv: "{{ topology_render_command }}"
+  environment:
+    NETBOX_TOKEN_TYPE: "{{ netbox_token_type }}"
+    NETBOX_TOKEN: "{{ netbox_token }}"
+  register: topology_render_result
+  changed_when: true
+
+- name: Hiển thị kết quả render topology
+  ansible.builtin.debug:
+    msg: "{{ topology_render_result.stdout_lines }}"

@@ -1,8 +1,8 @@
 Building configuration...
 
-Current configuration : 4750 bytes
+Current configuration : 4821 bytes
 !
-! Last configuration change at 14:30:55 UTC Mon Jun 8 2026
+! Last configuration change at 11:49:39 ICT Wed Jun 10 2026 by admin
 !
 version 15.2
 service timestamps debug datetime msec
@@ -19,6 +19,7 @@ boot-end-marker
 !
 username admin privilege 15 secret 5 $1$gXOK$d8iCNF0IRLgJwiSg1kYqD0
 no aaa new-model
+clock timezone ICT 7 0
 !
 !
 !
@@ -227,6 +228,8 @@ line vty 0 4
  login local
  transport input ssh
 !
+ntp server 8.8.8.8
+ntp server 1.1.1.1
 !
 !
 end

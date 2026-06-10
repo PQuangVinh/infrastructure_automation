@@ -1,0 +1,39 @@
+---
+- name: Publish NetBox cable topology to Zabbix Map
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    project_root: "{{ playbook_dir }}/.."
+    env_file: "{{ project_root }}/scripts/.env"
+    zabbix_map_script: "{{ project_root }}/scripts/publish_zabbix_map_from_netbox.py"
+    zabbix_map_output: "{{ project_root }}/outputs/zabbix_map_payload.json"
+    ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Publish overview map from NetBox cables
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ zabbix_map_script }}"
+          - --output-json
+          - "{{ zabbix_map_output }}"
+      environment:
+        NETBOX_URL: "{{ lookup('ansible.builtin.ini', 'NETBOX_URL type=properties file=' ~ env_file) }}"
+        NETBOX_TOKEN_TYPE: "{{ lookup('ansible.builtin.ini', 'NETBOX_TOKEN_TYPE type=properties file=' ~ env_file) | default('Token', true) }}"
+        NETBOX_TOKEN: "{{ lookup('ansible.builtin.ini', 'NETBOX_TOKEN type=properties file=' ~ env_file) }}"
+        NETBOX_VALIDATE_CERTS: "{{ lookup('ansible.builtin.ini', 'NETBOX_VALIDATE_CERTS type=properties file=' ~ env_file) | default('false', true) }}"
+        NETBOX_SITE: "{{ lookup('env', 'NETBOX_SITE') }}"
+        ZABBIX_API_HOST: "{{ lookup('ansible.builtin.ini', 'ZABBIX_API_HOST type=properties file=' ~ env_file) }}"
+        ZABBIX_API_PORT: "{{ lookup('ansible.builtin.ini', 'ZABBIX_API_PORT type=properties file=' ~ env_file) | default('8080', true) }}"
+        ZABBIX_API_USE_SSL: "{{ lookup('ansible.builtin.ini', 'ZABBIX_API_USE_SSL type=properties file=' ~ env_file) | default('false', true) }}"
+        ZABBIX_URL_PATH: "{{ lookup('ansible.builtin.ini', 'ZABBIX_URL_PATH type=properties file=' ~ env_file) | default('', true) }}"
+        ZABBIX_VALIDATE_CERTS: "{{ lookup('ansible.builtin.ini', 'ZABBIX_VALIDATE_CERTS type=properties file=' ~ env_file) | default('false', true) }}"
+        ANSIBLE_ZABBIX_AUTH_KEY: "{{ lookup('ansible.builtin.ini', 'ANSIBLE_ZABBIX_AUTH_KEY type=properties file=' ~ env_file) }}"
+        ZABBIX_MAP_NAME: "{{ lookup('ansible.builtin.ini', 'ZABBIX_MAP_NAME type=properties file=' ~ env_file) | regex_replace('^\"|\"$', '') }}"
+      register: zabbix_map_publish
+      changed_when: "'created' in zabbix_map_publish.stdout or 'updated' in zabbix_map_publish.stdout"
+
+    - name: Show Zabbix map publish result
+      ansible.builtin.debug:
+        msg: "{{ zabbix_map_publish.stdout_lines }}"

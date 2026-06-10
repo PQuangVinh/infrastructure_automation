@@ -1,0 +1,35 @@
+---
+- name: Manage Zabbix maintenance window for Ansible automation
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    project_root: "{{ playbook_dir }}/.."
+    zabbix_maintenance_script: "{{ project_root }}/scripts/zabbix_maintenance.py"
+    zabbix_maintenance_state: start
+    zabbix_maintenance_name: "Ansible NetBox Deploy"
+    zabbix_maintenance_duration: "30m"
+    zabbix_maintenance_hosts: ""
+    zabbix_maintenance_hostgroups: "Network Devices"
+    zabbix_maintenance_dry_run: false
+    zabbix_maintenance_output: "{{ project_root }}/outputs/zabbix_maintenance.json"
+
+  tasks:
+    - name: Create or remove Zabbix maintenance window
+      ansible.builtin.command:
+        cmd: >-
+          python3 {{ zabbix_maintenance_script | quote }}
+          {{ zabbix_maintenance_state | quote }}
+          --name {{ zabbix_maintenance_name | quote }}
+          --duration {{ zabbix_maintenance_duration | quote }}
+          --hosts {{ zabbix_maintenance_hosts | quote }}
+          --hostgroups {{ zabbix_maintenance_hostgroups | quote }}
+          --output-json {{ zabbix_maintenance_output | quote }}
+          {% if zabbix_maintenance_dry_run | bool %}--dry-run{% endif %}
+      register: zabbix_maintenance_result
+      changed_when: '"\"changed\": true" in zabbix_maintenance_result.stdout'
+
+    - name: Show Zabbix maintenance result
+      ansible.builtin.debug:
+        msg: "{{ zabbix_maintenance_result.stdout_lines }}"

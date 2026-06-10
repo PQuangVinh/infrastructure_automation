@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from config_common import load_project_env, netbox_auth_header, netbox_settings
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INVENTORY = REPO_ROOT / "inventories" / "lab" / "netbox_inventory.yml"
@@ -60,9 +62,9 @@ def import_dependencies() -> tuple[Any, Any, Any]:
     return pd, requests, openpyxl_helpers
 
 
-def build_headers(token: str) -> dict[str, str]:
+def build_headers(token: str, token_type: str = "Token") -> dict[str, str]:
     return {
-        "Authorization": f"Token {token}",
+        "Authorization": netbox_auth_header(token, token_type),
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
@@ -313,18 +315,26 @@ def autosize_workbook(writer: Any, helpers: dict[str, Any]) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    load_project_env(override=True)
     project_defaults = load_project_netbox_defaults()
-    default_url = os.getenv("NETBOX_URL") or project_defaults.get("url") or "http://localhost:8000"
-    default_token = os.getenv("NETBOX_TOKEN") or os.getenv("NETBOX_API_TOKEN") or project_defaults.get("token")
+    settings = netbox_settings(load_env=False)
+    default_url = settings.url or project_defaults.get("url") or "http://192.168.80.20:8000"
+    default_token = settings.token or project_defaults.get("token")
 
     parser = argparse.ArgumentParser(
         description="Export NetBox data to an Excel master workbook.",
     )
     parser.add_argument("--netbox-url", default=default_url, help=f"NetBox URL. Default: {default_url}")
     parser.add_argument("--token", default=default_token, help="NetBox API token. Can use NETBOX_TOKEN.")
+    parser.add_argument("--token-type", default=settings.token_type, help=f"NetBox auth scheme. Default: {settings.token_type}")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT), help=f"Excel output path. Default: {DEFAULT_OUTPUT}")
     parser.add_argument("--timeout", type=int, default=30, help="HTTP timeout in seconds.")
-    parser.add_argument("--no-verify-tls", action="store_true", help="Disable TLS certificate verification.")
+    parser.add_argument(
+        "--no-verify-tls",
+        action="store_true",
+        default=not settings.validate_certs,
+        help="Disable TLS certificate verification.",
+    )
     return parser.parse_args()
 
 
@@ -341,7 +351,7 @@ def main() -> int:
 
     output = Path(args.output).expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
-    headers = build_headers(args.token)
+    headers = build_headers(args.token, args.token_type)
     verify_tls = not args.no_verify_tls
 
     endpoints = {

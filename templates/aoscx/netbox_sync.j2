@@ -3,25 +3,60 @@
 ! ==========================================================
 hostname {{ inventory_hostname }}
 
-{% if config_context is defined and config_context %}
-{% if config_context.get('ntp_servers') %}
+{% set ctx_raw = config_context | default({}) %}
+{% if ctx_raw is mapping %}
+{% set ctx = ctx_raw %}
+{% elif ctx_raw is sequence and (ctx_raw | length) > 0 and (ctx_raw | first) is mapping %}
+{% set ctx = ctx_raw | first %}
+{% else %}
+{% set ctx = {} %}
+{% endif %}
+{% if ctx.get('ntp_servers') %}
 ntp enable
-{% for ntp in config_context.get('ntp_servers') %}
+{% for ntp in ctx.get('ntp_servers') %}
 ntp server {{ ntp }}
 {% endfor %}
 {% endif %}
+{% set zabbix_server = zabbix_api_host | default('') | string | trim %}
+{% set snmp_community_value = snmp_community | default('') | string | trim %}
+{% set syslog_raw = ctx.get('syslog_servers') | default([]) %}
+{% set syslog_servers = syslog_raw if syslog_raw is sequence and syslog_raw is not string else [] %}
+{% if zabbix_server %}
+{% set syslog_servers = (syslog_servers + [zabbix_server]) | unique | list %}
 {% endif %}
+{% set site_name = sites[0].name if sites is defined and sites is sequence and (sites | length) > 0 and sites[0] is mapping else (sites[0] if sites is defined and sites is sequence and (sites | length) > 0 else 'Unknown') %}
+{% set rack_name = racks[0] if racks is defined and racks is sequence and (racks | length) > 0 else '' %}
+{% set location_text = site_name ~ (' / ' ~ rack_name if rack_name else '') %}
+
+! ==========================================================
+! MONITORING BASELINE FOR ZABBIX
+! ==========================================================
+{% for syslog_server in syslog_servers %}
+logging {{ syslog_server }}
+{% endfor %}
+snmp-server vrf default
+{% if snmp_community_value %}
+snmp-server community {{ snmp_community_value }}
+{% for syslog_server in syslog_servers %}
+snmp-server host {{ syslog_server }} trap version v2c community {{ snmp_community_value }}
+{% endfor %}
+{% endif %}
+snmp-server system-contact network-ops
+snmp-server system-location {{ location_text }}
+lldp
 
 ! ==========================================================
 ! VLAN DEFINITIONS FROM NETBOX IPAM
 ! ==========================================================
 {% if nb_vlans is defined %}
 {% for item in nb_vlans %}
-{% set vlan = item.value | default(item) %}
+{% set vlan = item.value | default(item) if item is mapping else item %}
+{% if vlan is mapping %}
 {% set v_id = vlan.get('vid') or vlan.get('vlan_id') or vlan.get('id') %}
 {% if v_id %}
 vlan {{ v_id }}
     name {{ vlan.get('name', 'VLAN_' ~ v_id) | replace('"', "'") }}
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -31,7 +66,8 @@ vlan {{ v_id }}
 ! ==========================================================
 {% if nb_interfaces is defined %}
 {% for item in nb_interfaces %}
-{% set intf = item.value | default(item) %}
+{% set intf = item.value | default(item) if item is mapping else item %}
+{% if intf is mapping %}
 {% set intf_name = intf.get('name', intf.get('display')) %}
 {% set mode_obj = intf.get('mode', {}) %}
 {% set mode = mode_obj.get('value', mode_obj) if mode_obj is mapping else mode_obj %}
@@ -42,13 +78,16 @@ interface {{ intf_name }}
 {% endif %}
 {% if mode %}
     no routing
-{% set untagged = intf.get('untagged_vlan') or {} %}
+{% set untagged_raw = intf.get('untagged_vlan') %}
+{% set untagged = untagged_raw if untagged_raw is mapping else {} %}
 {% set untagged_ns = namespace(vid=untagged.get('vid') or untagged.get('vlan_id')) %}
 {% if not untagged_ns.vid and untagged.get('id') and nb_vlans is defined %}
 {% for v_item in nb_vlans %}
-{% set v = v_item.value | default(v_item) %}
+{% set v = v_item.value | default(v_item) if v_item is mapping else v_item %}
+{% if v is mapping %}
 {% if v.get('id') == untagged.get('id') %}
 {% set untagged_ns.vid = v.get('vid') or v.get('vlan_id') or v.get('id') %}
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -58,7 +97,8 @@ interface {{ intf_name }}
 {% if untagged_ns.vid %}
     vlan trunk native {{ untagged_ns.vid }}
 {% endif %}
-{% set tagged_vlans = intf.get('tagged_vlans', []) %}
+{% set tagged_vlans_raw = intf.get('tagged_vlans') %}
+{% set tagged_vlans = tagged_vlans_raw if tagged_vlans_raw is sequence and tagged_vlans_raw is not string else [] %}
 {% if mode == 'tagged-all' and not tagged_vlans and nb_vlans is defined %}
 {% set tagged_source = nb_vlans %}
 {% else %}
@@ -66,18 +106,22 @@ interface {{ intf_name }}
 {% endif %}
 {% set tagged_vids = [] %}
 {% for tv_item in tagged_source %}
-{% set tv = tv_item.value | default(tv_item) %}
+{% set tv = tv_item.value | default(tv_item) if tv_item is mapping else tv_item %}
+{% if tv is mapping %}
 {% set tagged_ns = namespace(vid=tv.get('vid') or tv.get('vlan_id')) %}
 {% if not tagged_ns.vid and tv.get('id') and nb_vlans is defined %}
 {% for v_item in nb_vlans %}
-{% set v = v_item.value | default(v_item) %}
+{% set v = v_item.value | default(v_item) if v_item is mapping else v_item %}
+{% if v is mapping %}
 {% if v.get('id') == tv.get('id') %}
 {% set tagged_ns.vid = v.get('vid') or v.get('vlan_id') or v.get('id') %}
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}
 {% if tagged_ns.vid and (not untagged_ns.vid or (tagged_ns.vid | string) != (untagged_ns.vid | string)) %}
 {% set _ = tagged_vids.append(tagged_ns.vid | string) %}
+{% endif %}
 {% endif %}
 {% endfor %}
 {% if tagged_vids | length > 0 %}
@@ -86,6 +130,7 @@ interface {{ intf_name }}
 {% endif %}
 {% endif %}
     no shutdown
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -96,13 +141,16 @@ interface {{ intf_name }}
 ! ==========================================================
 {% if aoscx_enable_port_role_policy | default(false) and nb_interfaces is defined %}
 {% for item in nb_interfaces %}
-{% set intf = item.value | default(item) %}
+{% set intf = item.value | default(item) if item is mapping else item %}
+{% if intf is mapping %}
 {% set intf_name = intf.get('name', intf.get('display')) %}
-{% set port_role = (intf.get('cf_port_role') or intf.get('custom_fields', {}).get('port_role') | default('')) | upper %}
+{% set custom_fields = intf.get('custom_fields') if intf.get('custom_fields') is mapping else {} %}
+{% set port_role = (intf.get('cf_port_role') or custom_fields.get('port_role') | default('')) | upper %}
 {% if intf_name and port_role and not (intf_name | upper).startswith('VLAN') %}
 interface {{ intf_name }}
 {% if port_role in ['USER', 'CAMERA', 'AP', 'VOICE'] %}
     spanning-tree bpdu-guard
+{% endif %}
 {% endif %}
 {% endif %}
 {% endfor %}

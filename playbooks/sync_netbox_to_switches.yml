@@ -4,8 +4,9 @@
   gather_facts: no
   vars:
     # Cấu hình API kết nối đến NetBox của bạn
-    netbox_url: "http://localhost:8000"
-    netbox_token: "nbt_U50yW0FdkGaq.Jw5AEEphCT94JwvvHfdOIdGOGYcn8dWanuNnQWNw"
+    env_file: "{{ playbook_dir }}/../scripts/.env"
+    netbox_url: "{{ lookup('ansible.builtin.ini', 'NETBOX_URL type=properties file=' ~ env_file) | default(lookup('ansible.builtin.ini', 'NETBOX_API type=properties file=' ~ env_file), true) | default(lookup('env', 'NETBOX_URL'), true) | default(lookup('env', 'NETBOX_API'), true) | default('http://192.168.80.20:8000', true) }}"
+    netbox_token: "{{ (lookup('ansible.builtin.ini', 'NETBOX_TOKEN type=properties file=' ~ env_file) | default(lookup('ansible.builtin.ini', 'NETBOX_API_TOKEN type=properties file=' ~ env_file), true) | default(lookup('env', 'NETBOX_TOKEN'), true) | default(lookup('env', 'NETBOX_API_TOKEN'), true)) | trim | regex_replace('(?i)^(bearer|token)\\s+', '') | trim }}"
     cisco_network_os_values:
       - ios
       - cisco.ios.ios
@@ -27,12 +28,14 @@
     - name: 0.1. Xác định network OS của thiết bị
       set_fact:
         nb_sync_network_os: "{{ ansible_network_os | default('cisco.ios.ios') | string | lower }}"
+      tags: always
 
     - name: 0.2. Chọn template và platform deploy phù hợp
       set_fact:
         nb_sync_platform: "{{ 'cisco' if nb_sync_network_os in cisco_network_os_values else 'aruba_aoscx' if nb_sync_network_os in aruba_aoscx_network_os_values else 'aruba_os_switch' if nb_sync_network_os in aruba_network_os_values else 'unsupported' }}"
         nb_sync_template: "{{ 'ios/netbox_sync.j2' if nb_sync_network_os in cisco_network_os_values else 'aoscx/netbox_sync.j2' if nb_sync_network_os in aruba_aoscx_network_os_values else 'aruba/netbox_sync.j2' if nb_sync_network_os in aruba_network_os_values else '' }}"
         nb_sync_config_path: "{{ playbook_dir }}/../generated_configs/{{ inventory_hostname }}_netbox_sync.cfg"
+      tags: always
 
     - name: 0.3. Dừng nếu thiết bị chưa được hỗ trợ
       assert:
@@ -41,6 +44,7 @@
         fail_msg: >-
           Chưa hỗ trợ ansible_network_os={{ ansible_network_os | default('undefined') }}
           cho {{ inventory_hostname }}. Hiện hỗ trợ Cisco IOS, ArubaOS-Switch và Aruba AOS-CX.
+      tags: always
 
     - name: 0.4. Dừng nếu inventory đang trỏ nhầm về chính máy automation
       assert:
@@ -50,6 +54,28 @@
           {{ inventory_hostname }} đang có ansible_host={{ ansible_host | default('undefined') }},
           trùng IP của máy automation. Hãy sửa primary management IP trong NetBox trước khi deploy.
       delegate_to: localhost
+      tags: always
+
+    - name: 0.5. Dừng nếu credential SSH vẫn là placeholder
+      fail:
+        msg: >-
+          Credential SSH chưa hợp lệ. Hãy cập nhật ANSIBLE_NET_USER,
+          ANSIBLE_NET_PASSWORD và ANSIBLE_NET_ENABLE_PASSWORD trong scripts/.env
+          bằng tài khoản thật của switch, không dùng chuỗi replace_with_*.
+      when:
+        - ansible_user | default('') | string | length == 0
+          or ansible_password is not defined
+          or ansible_password | string | length == 0
+          or ansible_password | string is match('^replace_with_')
+          or ansible_become_password | default(ansible_password) | string is match('^replace_with_')
+      tags: deploy
+
+    - name: 0.6. Xác nhận SSH dùng password/libssh
+      debug:
+        msg: >-
+          SSH credential loaded cho {{ inventory_hostname }}
+          (user={{ ansible_user }}, ssh_type={{ ansible_network_cli_ssh_type | default('libssh') }}).
+      tags: deploy
 
     # ---------------------------------------------------------
     # BƯỚC 1: KÉO DỮ LIỆU TỪ NETBOX QUA API (Sử dụng nb_lookup)
@@ -58,11 +84,19 @@
       set_fact:
         nb_vlans: "{{ query('netbox.netbox.nb_lookup', 'vlans', api_endpoint=netbox_url, token=netbox_token) }}"
       delegate_to: localhost
+      tags:
+        - netbox_fetch
+        - render
+        - deploy
 
     - name: 1.2. Lấy chi tiết toàn bộ Interface của chính Switch này
       set_fact:
         nb_interfaces: "{{ query('netbox.netbox.nb_lookup', 'interfaces', api_endpoint=netbox_url, token=netbox_token, api_filter='device=' ~ inventory_hostname) }}"
       delegate_to: localhost
+      tags:
+        - netbox_fetch
+        - render
+        - deploy
 
     # ---------------------------------------------------------
     # BƯỚC 2: KẾT HỢP DỮ LIỆU VỚI TEMPLATE ĐỂ RENDER CẤU HÌNH
@@ -71,7 +105,12 @@
       template:
         src: "{{ playbook_dir }}/../templates/{{ nb_sync_template }}"
         dest: "{{ nb_sync_config_path }}"
+        mode: "0644"
       delegate_to: localhost
+      check_mode: false
+      tags:
+        - render
+        - deploy
 
     # ---------------------------------------------------------
     # BƯỚC 3: ĐẨY CẤU HÌNH XUỐNG SWITCH THẬT
@@ -84,6 +123,7 @@
           filename: "{{ inventory_hostname }}_pre_netbox.bak"
           dir_path: "{{ playbook_dir }}/../backups"
       when: nb_sync_platform == 'cisco'
+      tags: deploy
 
     - name: 3. Đẩy cấu hình từ file đã render xuống Switch ArubaOS-Switch
       community.network.aruba_config:
@@ -93,6 +133,7 @@
           filename: "{{ inventory_hostname }}_pre_netbox.bak"
           dir_path: "{{ playbook_dir }}/../backups"
       when: nb_sync_platform == 'aruba_os_switch'
+      tags: deploy
 
     - name: 3. Đẩy cấu hình từ file đã render xuống Switch Aruba AOS-CX
       arubanetworks.aoscx.aoscx_config:
@@ -101,6 +142,14 @@
         backup_options:
           filename: "{{ inventory_hostname }}_pre_netbox.bak"
           dir_path: "{{ playbook_dir }}/../backups"
+        provider:
+          host: "{{ ansible_host }}"
+          username: "{{ ansible_user }}"
+          password: "{{ ansible_password }}"
+          auth_pass: "{{ ansible_become_password | default(ansible_password) }}"
+          authorize: false
+          timeout: "{{ ansible_command_timeout | default(180) }}"
       vars:
         ansible_become: no
       when: nb_sync_platform == 'aruba_aoscx'
+      tags: deploy

@@ -1,0 +1,4 @@
+---
+ansible_user: "{{ lookup('env', 'SW_BACKMA_USER') | default(lookup('env', 'ANSIBLE_NET_USER') | default('admin', true), true) }}"
+ansible_password: "{{ lookup('env', 'SW_BACKMA_PASSWORD') | default(lookup('env', 'ANSIBLE_NET_PASSWORD'), true) }}"
+ansible_become_password: "{{ lookup('env', 'SW_BACKMA_ENABLE_PASSWORD') | default(lookup('env', 'ANSIBLE_NET_ENABLE_PASSWORD') | default(ansible_password, true), true) }}"

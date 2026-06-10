@@ -17,14 +17,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
+from config_common import load_project_env, netbox_settings
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = REPO_ROOT / "data" / "Master_Infra_Config.xlsx"
 FALLBACK_SOURCE = REPO_ROOT / "data" / "Infra_config.xlsx"
 DEFAULT_CSV_DIR = REPO_ROOT / "data"
 DEFAULT_INVENTORY = REPO_ROOT / "inventories" / "lab" / "netbox_inventory.yml"
-ENV_FILES = (REPO_ROOT / ".env", REPO_ROOT / "scripts" / ".env")
-
 EMPTY_VALUES = {"", "nan", "none", "null", "nat"}
 
 
@@ -54,30 +54,6 @@ def import_netbox_dependency() -> tuple[Any, Any]:
         )
         raise SystemExit(2) from exc
     return pynetbox, RequestError
-
-
-def load_env_files() -> None:
-    try:
-        from dotenv import load_dotenv
-    except ModuleNotFoundError:
-        load_dotenv = None
-
-    for env_file in ENV_FILES:
-        if not env_file.exists():
-            continue
-        if load_dotenv:
-            load_dotenv(env_file)
-        else:
-            load_simple_env(env_file)
-
-
-def load_simple_env(path: Path) -> None:
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip("'\""))
 
 
 def load_project_netbox_defaults(path: Path = DEFAULT_INVENTORY) -> dict[str, str]:
@@ -683,10 +659,11 @@ def resolve_source(path_arg: str | None) -> Path:
 
 
 def parse_args() -> argparse.Namespace:
-    load_env_files()
+    load_project_env(override=True)
     project_defaults = load_project_netbox_defaults()
-    default_url = os.getenv("NETBOX_URL") or project_defaults.get("url") or "http://localhost:8000"
-    default_token = os.getenv("NETBOX_TOKEN") or os.getenv("NETBOX_API_TOKEN") or project_defaults.get("token")
+    settings = netbox_settings(load_env=False)
+    default_url = settings.url or project_defaults.get("url") or "http://192.168.80.20:8000"
+    default_token = settings.token or project_defaults.get("token")
 
     parser = argparse.ArgumentParser(description="Import Excel master infrastructure data into NetBox.")
     parser.add_argument("--source", help=f"Workbook path. Default: {DEFAULT_SOURCE} then {FALLBACK_SOURCE}")

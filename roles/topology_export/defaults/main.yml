@@ -1,0 +1,11 @@
+---
+env_file: /home/vinh/Desktop/infrastructure_automation/scripts/.env
+netbox_url: "{{ lookup('ansible.builtin.ini', 'NETBOX_URL type=properties file=' ~ env_file) | default(lookup('ansible.builtin.ini', 'NETBOX_API type=properties file=' ~ env_file), true) | default(lookup('env', 'NETBOX_URL'), true) | default(lookup('env', 'NETBOX_API'), true) | default('http://192.168.80.20:8000', true) }}"
+netbox_token_type: "{{ lookup('ansible.builtin.ini', 'NETBOX_TOKEN_TYPE type=properties file=' ~ env_file) | default(lookup('env', 'NETBOX_TOKEN_TYPE'), true) | default('Token', true) }}"
+netbox_token: "{{ (lookup('ansible.builtin.ini', 'NETBOX_TOKEN type=properties file=' ~ env_file) | default(lookup('ansible.builtin.ini', 'NETBOX_API_TOKEN type=properties file=' ~ env_file), true) | default(lookup('env', 'NETBOX_TOKEN'), true) | default(lookup('env', 'NETBOX_API_TOKEN'), true)) | trim | regex_replace('(?i)^(bearer|token)\\s+', '') | trim }}"
+netbox_validate_certs: "{{ lookup('ansible.builtin.ini', 'NETBOX_VALIDATE_CERTS type=properties file=' ~ env_file) | default(lookup('env', 'NETBOX_VALIDATE_CERTS'), true) | default('false', true) | bool }}"
+
+topology_site: "{{ lookup('env', 'NETBOX_SITE') | default('', true) }}"
+topology_output_dir: "{{ playbook_dir }}/../outputs"
+topology_script: "{{ playbook_dir }}/../scripts/render_topology_from_netbox.py"
+topology_validate_certs: "{{ netbox_validate_certs | default(true) }}"

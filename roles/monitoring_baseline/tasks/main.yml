@@ -1,0 +1,43 @@
+---
+- name: Xác định nền tảng thiết bị cho monitoring baseline
+  ansible.builtin.set_fact:
+    monitoring_baseline_network_os: "{{ ansible_network_os | default('cisco.ios.ios') | string | lower }}"
+
+- name: Chọn template monitoring baseline phù hợp
+  ansible.builtin.set_fact:
+    monitoring_baseline_platform: >-
+      {{ 'cisco'
+         if monitoring_baseline_network_os in ['ios', 'cisco.ios.ios']
+         else 'unsupported' }}
+    monitoring_baseline_config_path: "{{ monitoring_generated_config_dir }}/{{ inventory_hostname }}_monitoring_baseline.cfg"
+
+- name: Tạo thư mục generated config nếu chưa có
+  ansible.builtin.file:
+    path: "{{ monitoring_generated_config_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+  run_once: true
+
+- name: Render monitoring baseline Cisco IOS
+  ansible.builtin.template:
+    src: ios/monitoring_baseline.j2
+    dest: "{{ monitoring_baseline_config_path }}"
+    mode: "0644"
+  delegate_to: localhost
+  check_mode: false
+  when: monitoring_baseline_platform == 'cisco'
+
+- name: Đẩy monitoring baseline xuống Cisco IOS
+  cisco.ios.ios_config:
+    src: "{{ monitoring_baseline_config_path }}"
+    backup: true
+    backup_options:
+      filename: "{{ inventory_hostname }}_pre_monitoring_baseline.bak"
+      dir_path: "{{ playbook_dir }}/../backups"
+  when: monitoring_baseline_platform == 'cisco'
+
+- name: Bỏ qua thiết bị chưa hỗ trợ monitoring baseline
+  ansible.builtin.debug:
+    msg: "Chưa hỗ trợ monitoring baseline cho ansible_network_os={{ ansible_network_os | default('undefined') }} trên {{ inventory_hostname }}."
+  when: monitoring_baseline_platform == 'unsupported'

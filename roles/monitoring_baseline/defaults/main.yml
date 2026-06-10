@@ -1,0 +1,24 @@
+---
+monitoring_generated_config_dir: "{{ playbook_dir }}/../generated_configs"
+monitoring_apply_interface_descriptions: true
+
+monitoring_ntp_servers: "{{ config_context.ntp_servers | default([]) if config_context is defined else [] }}"
+monitoring_syslog_servers: "{{ config_context.syslog_servers | default([]) if config_context is defined else [] }}"
+monitoring_zabbix_servers:
+  - "{{ zabbix_api_host | default('') }}"
+
+monitoring_snmp_version: "v2c"
+monitoring_snmp_community: "{{ snmp_community | default('') }}"
+monitoring_snmp_acl_name: "SNMP-MONITORING"
+monitoring_snmp_contact: "{{ lookup('env', 'SNMP_CONTACT') | default('network-ops', true) }}"
+monitoring_snmpv3_group: "{{ lookup('env', 'SNMPV3_GROUP') | default('ZABBIX', true) }}"
+monitoring_snmpv3_user: "{{ lookup('env', 'SNMPV3_USER') }}"
+monitoring_snmpv3_auth_pass: "{{ lookup('env', 'SNMPV3_AUTH_PASS') }}"
+monitoring_snmpv3_priv_pass: "{{ lookup('env', 'SNMPV3_PRIV_PASS') }}"
+monitoring_snmp_location: >-
+  {{ site.name | default(site.display | default('Unknown')) }}
+  {% if rack is defined and rack.name is defined %}/ {{ rack.name }}{% endif %}
+
+monitoring_enable_lldp: true
+monitoring_enable_cdp: false
+monitoring_logging_trap_level: informational

@@ -1,10 +1,28 @@
 plugin: netbox.netbox.nb_inventory
-api_endpoint: http://localhost:8000
-token: nbt_U50yW0FdkGaq.Jw5AEEphCT94JwvvHfdOIdGOGYcn8dWanuNnQWNw
-config_context: False
+api_endpoint: http://192.168.80.20:8000
+token:
+  type: Bearer
+  value: nbt_qSeXOBDQzYcC.ohiTXgiDJROIX6erqDBjt7S2Dzph28guSv9xiyWf
+validate_certs: false
+config_context: true
+interfaces: true
+site_data: true
+flatten_custom_fields: false
+rename_variables:
+  - pattern: "^tags$"
+    repl: "netbox_tags"
+  - pattern: "^serial$"
+    repl: "device_serial"
 
 group_by:
+  - sites
   - device_roles
+  - platforms
+  - tags
+
+device_query_filters:
+  - status: active
+  - has_primary_ip: "true"
 
 compose:
   # Cắt bỏ phần Subnet Mask (/24), chỉ lấy đúng chuỗi IP để SSH
@@ -14,6 +32,4 @@ compose:
   # - Platform slug arubaos-switch/aos-switch -> ArubaOS-Switch
   # - Còn lại mặc định Cisco IOS cho lab hiện tại.
   ansible_network_os: "'arubanetworks.aoscx.aoscx' if ((platform is defined and platform and (platform.slug | default(platform.name | default('')) | lower) in ['aoscx', 'aruba-cx', 'arubacx', 'arubaos-cx']) or (device_type is defined and (device_type.slug | default(device_type.model | default('')) | lower) in ['aoscx', 'aruba-cx', 'arubacx', 'arubaos-cx'])) else 'community.network.aruba' if ((platform is defined and platform and (platform.slug | default(platform.name | default('')) | lower) in ['aruba', 'arubaos-switch', 'aruba-os-switch', 'aos-switch', 'arubaoss']) or (device_type is defined and device_type.manufacturer is defined and (device_type.manufacturer.slug | default(device_type.manufacturer.name | default('')) | lower) in ['aruba', 'hpe', 'hp'])) else 'cisco.ios.ios'"
-  ansible_network_cli_ssh_type: "'paramiko' if ((platform is defined and platform and (platform.slug | default(platform.name | default('')) | lower) in ['aoscx', 'aruba-cx', 'arubacx', 'arubaos-cx']) or (device_type is defined and (device_type.slug | default(device_type.model | default('')) | lower) in ['aoscx', 'aruba-cx', 'arubacx', 'arubaos-cx'])) else 'auto'"
-  ansible_user: "'admin'"
-  ansible_password: "'cisco'"
+  ansible_network_cli_ssh_type: "'libssh'"

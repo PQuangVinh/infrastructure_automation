@@ -9,7 +9,7 @@
 FW-EDGE-01 ansible_host=192.168.80.1 ansible_connection=httpapi ansible_network_os=fortinet.fortios.fortios
 
 [brownfield_switches]
-SW_BACKMA ansible_host=10.255.242.6 ansible_network_os=cisco.ios.ios ansible_user=admin ansible_password=bachma@2025 ansible_connection=network_cli
+SW_BACKMA ansible_host=10.255.242.6 ansible_network_os=cisco.ios.ios ansible_connection=network_cli
 
 [all_switches:children]
 core_switches
@@ -18,11 +18,7 @@ access_switches
 [core_switches:vars]
 ansible_connection=network_cli
 ansible_network_os=ios
-ansible_user=admin
-ansible_password=cisco
 
 [access_switches:vars]
 ansible_connection=network_cli
 ansible_network_os=ios
-ansible_user=admin
-ansible_password=cisco

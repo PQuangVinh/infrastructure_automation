@@ -1,0 +1,68 @@
+---
+- name: Safe interface-down investigation
+  hosts: "{{ target_hosts | default('all_switches') }}"
+  gather_facts: false
+  vars:
+    remediation_output_dir: "{{ playbook_dir }}/../generated_reports/remediation"
+    affected_interface: "{{ lookup('env', 'AFFECTED_INTERFACE') | default('', true) }}"
+
+  tasks:
+    - name: Dừng nếu chưa khai báo interface cần kiểm tra
+      ansible.builtin.assert:
+        that:
+          - affected_interface | length > 0
+        fail_msg: "Thiếu affected_interface. Ví dụ: -e affected_interface=Ethernet0/1"
+
+    - name: Tạo thư mục báo cáo remediation
+      ansible.builtin.file:
+        path: "{{ remediation_output_dir }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Xác định nền tảng thiết bị
+      ansible.builtin.set_fact:
+        remediation_network_os: "{{ ansible_network_os | default('cisco.ios.ios') | string | lower }}"
+
+    - name: Thu thập thông tin sự cố interface trên Cisco IOS
+      cisco.ios.ios_command:
+        commands:
+          - "show interface {{ affected_interface }}"
+          - "show logging | include {{ affected_interface }}"
+          - "show lldp neighbors {{ affected_interface }} detail"
+          - "show cdp neighbors {{ affected_interface }} detail"
+          - "show running-config interface {{ affected_interface }}"
+      register: remediation_interface_output
+      failed_when: false
+      when: remediation_network_os in ['ios', 'cisco.ios.ios']
+
+    - name: Lưu báo cáo điều tra interface down
+      ansible.builtin.copy:
+        dest: "{{ remediation_output_dir }}/{{ inventory_hostname }}_{{ affected_interface | regex_replace('[^A-Za-z0-9_.-]+', '_') }}.txt"
+        mode: "0644"
+        content: |
+          Device: {{ inventory_hostname }}
+          Interface: {{ affected_interface }}
+          ansible_host: {{ ansible_host | default('unknown') }}
+          ansible_network_os: {{ ansible_network_os | default('unknown') }}
+
+          This playbook is intentionally read-only. It does not shut/no shut,
+          clear errdisable, change VLANs, or reload devices.
+
+          {% if remediation_interface_output.stdout is defined %}
+          {% for command_output in remediation_interface_output.stdout %}
+          ============================================================
+          {{ remediation_interface_output.invocation.module_args.commands[loop.index0] }}
+          ============================================================
+          {{ command_output }}
+
+          {% endfor %}
+          {% else %}
+          Collection skipped because this platform is not supported yet.
+          {% endif %}
+      delegate_to: localhost
+
+    - name: Hiển thị vị trí báo cáo
+      ansible.builtin.debug:
+        msg: "Đã lưu báo cáo read-only cho {{ inventory_hostname }} {{ affected_interface }} trong {{ remediation_output_dir }}."
