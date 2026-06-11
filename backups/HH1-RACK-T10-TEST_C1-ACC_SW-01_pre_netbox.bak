@@ -1,8 +1,8 @@
 Building configuration...
 
-Current configuration : 4942 bytes
+Current configuration : 1324 bytes
 !
-! Last configuration change at 11:49:53 ICT Wed Jun 10 2026 by admin
+! Last configuration change at 06:53:57 UTC Wed Jun 10 2026
 !
 version 15.2
 service timestamps debug datetime msec
@@ -10,7 +10,7 @@ service timestamps log datetime msec
 service password-encryption
 service compress-config
 !
-hostname HH1-RACK-T10-TEST_C1-ACC_SW-01
+hostname Switch
 !
 boot-start-marker
 boot-end-marker
@@ -19,7 +19,6 @@ boot-end-marker
 !
 username admin privilege 15 secret 5 $1$HyA9$bDWjushg39eN.0wFagz/50
 no aaa new-model
-clock timezone ICT 7 0
 !
 !
 !
@@ -52,166 +51,39 @@ spanning-tree extend system-id
 !
 !
 interface Ethernet0/0
- description Uplink to Distribution/Core Switch
- switchport trunk allowed vlan 1,10,20
- switchport trunk encapsulation dot1q
- switchport mode trunk
- spanning-tree link-type point-to-point
- ip dhcp snooping trust
 !
 interface Ethernet0/1
- description Uplink to Distribution/Core Switch
- switchport trunk allowed vlan 1,10,20
- switchport trunk encapsulation dot1q
- switchport mode trunk
- spanning-tree link-type point-to-point
- ip dhcp snooping trust
 !
 interface Ethernet0/2
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet0/3
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet1/0
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet1/1
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet1/2
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet1/3
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet2/0
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet2/1
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet2/2
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet2/3
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet3/0
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet3/1
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet3/2
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Ethernet3/3
- description CCTV Camera
- switchport access vlan 20
- switchport mode access
- switchport nonegotiate
- switchport port-security
- spanning-tree portfast edge
- spanning-tree bpduguard enable
- ip dhcp snooping limit rate 10
 !
 interface Vlan1
  ip address 192.168.80.16 255.255.255.0
-!
-interface Vlan10
- no ip address
 !
 ip default-gateway 192.168.80.254
 ip forward-protocol nd
@@ -237,8 +109,6 @@ line vty 0 4
  login local
  transport input ssh
 !
-ntp server 8.8.8.8
-ntp server 1.1.1.1
 !
 !
 end

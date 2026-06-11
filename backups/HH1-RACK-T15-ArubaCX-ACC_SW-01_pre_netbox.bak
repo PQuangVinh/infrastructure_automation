@@ -16,6 +16,7 @@ cli-session
 !
 !
 !
+logging 192.168.80.20
 ssh server vrf default
 ssh server vrf mgmt
 vlan 1
@@ -112,6 +113,11 @@ interface 1/1/16
     vlan access 20
 interface vlan 1
     ip address 192.168.80.87/24
+snmp-server vrf default
+snmp-server system-location CHUNGCU / HH1-RACK-T15
+snmp-server system-contact network-ops
+snmp-server community public
+snmp-server host 192.168.80.20 trap version v2c 
 ip route 0.0.0.0/0 192.168.80.254
 ip dns domain-name local.lab
 !
